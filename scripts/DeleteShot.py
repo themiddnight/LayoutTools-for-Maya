@@ -1,6 +1,6 @@
 import pymel.core as pm
 import maya.cmds as cmds
-from LayoutTool.modules import getSortedShotLs_mod
+from modules import getSortedShotLs_mod
 reload(getSortedShotLs_mod)
     
 def blockShotKey():

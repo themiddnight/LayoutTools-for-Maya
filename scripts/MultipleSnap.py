@@ -4,7 +4,7 @@
 
 import sys
 import maya.cmds as cmds
-from LayoutTool.modules import snap_mod
+from modules import snap_mod
 reload(snap_mod)
 
 def run():

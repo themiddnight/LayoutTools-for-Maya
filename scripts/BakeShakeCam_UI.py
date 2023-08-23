@@ -1,5 +1,5 @@
 import pymel.core as pm
-from LayoutTool.modules import bakeCamShake_mod
+from modules import bakeCamShake_mod
 reload(bakeCamShake_mod)
 
 def doBake(*args):

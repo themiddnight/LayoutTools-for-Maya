@@ -5,10 +5,11 @@ import sqlite3
 import os
 import csv
 
+dbpath = 'C:/' # <------ path to save database file, same as in "LayoutTool/scriptUsage.py"
 dbfile = 'layouttool_script_usage.db'
 
 def refresh(orderby):
-	con = sqlite3.connect(dbfile)
+	con = sqlite3.connect(dbpath + dbfile)
 	cursor = con.cursor()
 	cursor.execute("""SELECT DISTINCT strftime('%m', timestamp) as month FROM script_usage ORDER by month """)
 	month_ls_raw = cursor.fetchall()
@@ -32,7 +33,7 @@ def getTableData(orderby):
 	month = month_ls_cmb.get()
 	year = year_ls_cmb.get()
 	subsort = subsort_cmb.get()
-	con = sqlite3.connect(path + dbfile)
+	con = sqlite3.connect(dbpath + dbfile)
 	cursor = con.cursor()
 	if month == 'All' and year == 'All':
 		sqlcmd = """SELECT * FROM script_usage ORDER by {}, {}""".format(orderby, subsort)

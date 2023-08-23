@@ -44,7 +44,8 @@ def savePref(data, value):
         json.dump(pref, file)
           
 def getScripts():
-    return [i.split('.')[0] for i in os.listdir(root + '/scripts') if '.pyc' not in i]
+    scriptsPath = os.listdir('scripts')
+    return [i.split('.')[0] for i in os.listdir(scriptsPath + '/scripts') if '.pyc' not in i and '__init__' not in i]
     
 def getScripDescription(scriptName):
     descriptionTxLs = []

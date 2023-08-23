@@ -1,5 +1,5 @@
 import pymel.core as pm
-from LayoutTool import LayoutTool_core as LT
+import LayoutTool_core as LT
 reload(LT)
 
 def runMainUI():

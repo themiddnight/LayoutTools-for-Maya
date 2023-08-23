@@ -133,10 +133,10 @@ def pasteShake(*args):
 ################################
 
 def UI():
-    if pm.window('layoutTools2Win', q = True, exists = True):
-        pm.deleteUI('layoutTools2Win')
+    if pm.window('layoutToolsWin', q = True, exists = True):
+        pm.deleteUI('layoutToolsWin')
         
-    app = pm.window('layoutTools2Win', t = 'Layout Tools')
+    app = pm.window('layoutToolsWin', t = 'Layout Tools')
     tabs = pm.tabLayout(imw = 5, imh = 5)
     
     ################################
@@ -210,7 +210,7 @@ def UI():
     with app:
         pm.tabLayout(tabs, e = True, tabLabel = ((colMain1, 'Layout'), (colMain2, 'Scripts')))
 
-    pm.showWindow('layoutTools2Win')
+    pm.showWindow('layoutToolsWin')
     
 def initial():
     UI()

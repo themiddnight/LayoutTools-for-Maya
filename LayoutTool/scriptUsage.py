@@ -4,7 +4,7 @@ import sqlite3
 import csv
 from datetime import datetime
 
-path = 'C:/'
+path = 'C:/' # <------ path to save database file
 dbfile = 'layouttool_script_usage.db'
 csvfile = 'layouttool_script_usage.csv'
 

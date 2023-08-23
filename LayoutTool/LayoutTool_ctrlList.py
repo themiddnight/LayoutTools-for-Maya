@@ -90,7 +90,7 @@ def currentShot():
     return currentShotName, shotStart, shotEnd
     
 def snapToRefCam(camName, camCtrl, refCam, focal):
-    from LayoutTool.modules import snap_mod
+    from modules import snap_mod
     reload(snap_mod)
     snap_mod.snap(['%s:%s' %(camName, camCtrl), refCam])
     camera_ctrl = '%s:camera_ctrl' %camName

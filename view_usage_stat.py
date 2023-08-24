@@ -36,6 +36,9 @@ class UsageStatUI(Tk):
         self.subsort_cmb = ttk.Combobox(self.func_frm, width=10)
         self.subsort_cmb.pack(side='right', pady = 10, padx=5)
         ttk.Label(self.func_frm, text='Subsort:').pack(side='right')
+        self.sort_cmb = ttk.Combobox(self.func_frm, width=10)
+        self.sort_cmb.pack(side='right', pady = 10, padx=5)
+        ttk.Label(self.func_frm, text='Sort:').pack(side='right')
 
         # create table widget
         self.table_frm = ttk.Frame(app_frm)
@@ -79,6 +82,8 @@ class UsageStatUI(Tk):
         self.month_ls_cmb.current(month_ls.index('All'))
         self.year_ls_cmb['values'] = year_ls
         self.year_ls_cmb.current(year_ls.index('All'))
+        self.sort_cmb['values'] = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
+        self.sort_cmb.current(3)
         self.subsort_cmb['values'] = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
         self.subsort_cmb.current(4)
         self.generateTable(self.order)

@@ -1,8 +1,8 @@
 import pymel.core as pm
 import maya.mel as mel
 import os
-import sys
 import json
+import scripts
 
 class LayoutToolCore:
     def __init__(self):
@@ -10,19 +10,19 @@ class LayoutToolCore:
                         "customScriptBtn": ["RxPlacementToOffset", "BakeShakeCam_UI", "DeleteShot", "PublishCheckTool_UI"], 
                         "lensList": [24, 28, 35, 50, 85, 135]}
 
-        self.documents_path = os.path.join(os.getenv('USERPROFILE'), 'Documents\\maya\\')
-        self.scripts_path = 'C:/Users/themi/Documents/GitHub/LayoutTools-for-Maya/scripts/'
+        self.pref_path = os.path.join(os.getenv('USERPROFILE'), 'Documents\\maya\\')
+        self.scripts_path = os.path.dirname(scripts.__file__) + '/'
             
     def getPref(self, data):
         def setDefault():
-            with open(self.documents_path + 'LayoutTool_pref.json', 'w') as file:
+            with open(self.pref_path + 'LayoutTool_pref.json', 'w') as file:
                 json.dump(self.pref_default, file)
-            with open(self.documents_path + 'LayoutTool_pref.json', 'r') as file:
+            with open(self.pref_path + 'LayoutTool_pref.json', 'r') as file:
                 pref = json.load(file)
                 value = pref[data]
             return value
         try:
-            with open(self.documents_path + 'LayoutTool_pref.json', 'r') as file:
+            with open(self.pref_path + 'LayoutTool_pref.json', 'r') as file:
                 pref = json.load(file)
                 value = pref[data]
         except IOError:
@@ -39,10 +39,10 @@ class LayoutToolCore:
         return value
             
     def savePref(self, data, value):
-        with open(self.documents_path + 'LayoutTool_pref.json', 'r') as file:
+        with open(self.pref_path + 'LayoutTool_pref.json', 'r') as file:
             pref = json.load(file)
         pref[data] = value
-        with open(self.documents_path + 'LayoutTool_pref.json', 'w') as file:
+        with open(self.pref_path + 'LayoutTool_pref.json', 'w') as file:
             json.dump(pref, file)
             
     def getScripts(self):

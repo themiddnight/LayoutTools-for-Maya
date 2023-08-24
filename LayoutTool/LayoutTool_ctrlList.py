@@ -1,5 +1,4 @@
 import pymel.core as pm
-import sys
 
 class LayoutToolCtrl:
     def __init__(self):
@@ -93,6 +92,7 @@ class LayoutToolCtrl:
         return currentShotName, shotStart, shotEnd
         
     def snapToRefCam(self, camName, camCtrl, refCam, focal):
+        from imp import reload
         from modules import snap_mod
         reload(snap_mod)
         snap_mod.snap(['%s:%s' %(camName, camCtrl), refCam])

@@ -1,11 +1,11 @@
+from imp import reload
 import pymel.core as pm
-import os
 import LayoutTool_core
 import LayoutTool_ctrlList
-import scriptUsage
+import logScriptUsage
 reload(LayoutTool_core)
 reload(LayoutTool_ctrlList)
-reload(scriptUsage)
+reload(logScriptUsage)
 
 
 ################################
@@ -16,6 +16,7 @@ class LayoutToolUI:
         self.shakeValue = []
         self.core = LayoutTool_core.LayoutToolCore()
         self.ctrl = LayoutTool_ctrlList.LayoutToolCtrl()
+        self.logData = logScriptUsage.LogScriptUsage()
 
         self.camLs, self.assetLs = self.ctrl.getNameList()
         self.scriptLs = self.core.getScripts()
@@ -31,7 +32,6 @@ class LayoutToolUI:
         self.colMain1 = pm.columnLayout(adj = True, rs = 5)
         with self.colMain1:
             pm.separator(style = 'none')
-            #pm.text(l = 'Preparing Camera', al = 'left', fn = 'boldLabelFont')
             self.row1 = pm.rowLayout(nc = 3,  adj = 2, columnAttach = [(1,'both',5),(2,'both',5),(3,'both',5)])
             with self.row1:
                 pm.text(l = 'Ref. camera: ')
@@ -46,7 +46,6 @@ class LayoutToolUI:
                 for i in self.core.getPref("lensList"):
                     pm.button(l = str(i) + ' mm', c = lambda x, fl = i: self.setsetRefCamFocal(fl))
             pm.separator()
-            #pm.text(l = 'Camera Controllers', al = 'left', fn = 'boldLabelFont')
             self.rowCol1 = pm.rowColumnLayout(nc = 2, cw = ([1,130],[2,120]), cs = [2,5], rs = ([1,5]))
             with self.rowCol1:
                 pm.text(l = 'Camera:', al = 'left')
@@ -61,7 +60,6 @@ class LayoutToolUI:
                 pm.button(l = 'Current Shot', c = self.selectCurrentShot)
                 pm.button(l = 'Snap to Ref. Cam', c = self.snapToRefCam)
             pm.separator()
-            #pm.text(l = 'Asset Controllers', al = 'left', fn = 'boldLabelFont')
             self.rowCol3 = pm.rowColumnLayout(nc = 2, cw = ([1,130],[2,120]), cs = [2,5], rs = ([1,5]))
             with self.rowCol3:
                 pm.text(l = 'Asset:', al = 'left')
@@ -98,7 +96,7 @@ class LayoutToolUI:
                               sc = self.getScriptDescription, 
                               dcc = self.runScriptTx)
             pm.text(l = 'Descriptions:', al = 'left')
-            pm.scrollField('scriptDescriptionTx', w = 100, ww = True, ed = False, bgc = [0.22,0.22,0.22])
+            pm.scrollField('scriptDescriptionTx', w = 100, h = 200, ww = True, ed = False, bgc = [0.22,0.22,0.22])
             row2 = pm.rowLayout(nc = 3, adj = 2, columnAttach = [(1,'both',2),(2,'both',2),(3,'both',2)])
             with row2:
                 pm.button(l = 'Run', w = 100, c = self.runScriptTx)
@@ -123,13 +121,13 @@ class LayoutToolUI:
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
         script = scriptName
         runfrom = 'tool'
-        # scriptUsage.addData(self, script, runfrom)
+        self.logData.addData(script, runfrom)
         self.core.runScript(scriptName)
         
     def runScriptBtn(self, scriptName):
         script = scriptName
         runfrom = 'button'
-        # scriptUsage.addData(self, script, runfrom)
+        self.logData.addData(script, runfrom)
         self.core.runScript(scriptName)
         
     def addScriptToShelf(self, *args):
@@ -207,7 +205,8 @@ class LayoutToolUI:
     def pasteShake(self, *args):
         self.ctrl.pasteShakeProc()
 
-class SetCustomLensUI:
+
+class SetCustomLensUI(LayoutToolUI):
     def __init__(self):
 
         self.core = LayoutTool_core.LayoutToolCore()
@@ -256,7 +255,8 @@ class SetCustomLensUI:
     def runMainUI(self):
         LayoutToolUI()
 
-class SetCustomScriptBtnUI:
+
+class SetCustomScriptBtnUI(LayoutToolUI):
     def __init__(self):
 
         self.core = LayoutTool_core.LayoutToolCore()
@@ -264,7 +264,8 @@ class SetCustomScriptBtnUI:
 
         scriptLs = self.core.getScripts()
         btnLs = self.core.getPref("customScriptBtn")
-        scrollWidth = 200
+        scroll_w = 200
+        scroll_h = 200
         btnWidth = 100
         if pm.window('setBtnWin', q = True, exists = True):
             pm.deleteUI('setBtnWin')
@@ -280,12 +281,12 @@ class SetCustomScriptBtnUI:
                     pm.separator(style = 'none')
                     pm.text(l = 'Custom Buttons', al = 'left')
                     
-                    pm.textScrollList('allScriptTx', w = scrollWidth, 
+                    pm.textScrollList('allScriptTx', w = scroll_w, h = scroll_h,
                                       append = scriptLs, ams = True, 
                                       sc = self.getScriptDescription, 
                                       dcc = self.addCustomScript)
                     pm.text(l = '->')
-                    pm.textScrollList('customScriptTx', w = scrollWidth, append = btnLs, ams = True)
+                    pm.textScrollList('customScriptTx', w = scroll_w, h = scroll_h, append = btnLs, ams = True)
                     
                     pm.button(l = 'Add ->', c = self.addCustomScript)
                     pm.separator(style = 'none')
@@ -299,7 +300,7 @@ class SetCustomScriptBtnUI:
                     pm.separator(style = 'none')
                     pm.separator(style = 'none')
                     
-                    pm.scrollField('descriptionTx', w = scrollWidth, ed = False, ww = True, bgc = [0.22,0.22,0.22])
+                    pm.scrollField('descriptionTx', w = scroll_w, h = scroll_h, ed = False, ww = True, bgc = [0.22,0.22,0.22])
                     pm.separator(style = 'none')
                     col2 = pm.columnLayout(adj = True, rs = 5)
                     with col2:

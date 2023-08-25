@@ -9,14 +9,17 @@ class UsageStatUI(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
 
-        self.dbpath   = 'C:/' # <------ path to save database file. same as in "LayoutTool/scriptUsage.py"
+        # path to save database file. same as in "LayoutTool/scriptUsage.py"
+        self.dbpath   = '/Users/Pathompong/Documents/GitHub/LayoutTools-for-Maya/' 
         self.dbfile   = 'layouttool_script_usage.db'
         self.order    = 'id'
         self.suborder = 'script'
         self.colums   = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
+        self.year_ls  = list(['All'])
+        self.month_ls  = list(['All'])
 
-        self.title('Layout Statistic')
-        self.geometry('800x600+500+300')
+        self.title('Layout Scripts Statistic')
+        self.geometry('900x600+200+200')
 
         app_frm = ttk.Frame(self)
         app_frm.pack(fill='both', expand=True, padx=10, pady=10)
@@ -24,12 +27,12 @@ class UsageStatUI(Tk):
         # create functions widget
         self.func_frm = ttk.Frame(app_frm)
         self.func_frm.pack(fill='x')
-        ttk.Label(self.func_frm, text='Month:').pack(side='left')
-        self.month_ls_cmb = ttk.Combobox(self.func_frm, width=10)
-        self.month_ls_cmb.pack(side='left', pady = 10, padx=5)
         ttk.Label(self.func_frm, text='Year:').pack(side='left')
         self.year_ls_cmb = ttk.Combobox(self.func_frm, width=10)
         self.year_ls_cmb.pack(side='left', pady = 10, padx=5)
+        ttk.Label(self.func_frm, text='Month:').pack(side='left')
+        self.month_ls_cmb = ttk.Combobox(self.func_frm, width=10)
+        self.month_ls_cmb.pack(side='left', pady = 10, padx=5)
 
         self.export_btn = ttk.Button(self.func_frm, text='Export CSV', 
                                      width = 15, command=self.exportCsv)
@@ -46,21 +49,20 @@ class UsageStatUI(Tk):
         # create table widget
         self.table_frm = ttk.Frame(app_frm)
         self.table_frm.pack(fill='both', expand=True)
-        col_w    = 70
-        col_ls   = ('ID', 'Date/Time', 'User', 'Script', 'Run From', 'File')
         col_w_ls = [0, 70, 30, 100, 10, 200]
         self.scl_table = ttk.Scrollbar(self.table_frm)
         self.scl_table.pack(side='right', fill='y')
-        self.table = ttk.Treeview(self.table_frm, column=col_ls, show='headings', 
+        self.table = ttk.Treeview(self.table_frm, column=self.colums, show='headings', 
                                   selectmode='extended', yscrollcommand=self.scl_table.set)
         self.table.pack(fill='both', expand=True)
 
         for i in range(6):
             self.table.column('{}'.format(i), width=col_w_ls[i])
-            self.table.heading('{}'.format(i), text=col_ls[i], command=self.generateTable)
+            self.table.heading('{}'.format(i), text=self.colums[i], command=self.generateTable)
 
         self.month_ls_cmb.bind('<<ComboboxSelected>>', self.generateTable)
         self.year_ls_cmb.bind('<<ComboboxSelected>>', self.generateTable)
+        self.sort_cmb.bind('<<ComboboxSelected>>', self.generateTable)
         self.subsort_cmb.bind('<<ComboboxSelected>>', self.generateTable)
         self.table.bind('<<TreeviewSelect>>', self.showSelectedCount)
 
@@ -70,26 +72,28 @@ class UsageStatUI(Tk):
     def refresh(self):
         con = sqlite3.connect(self.dbpath + self.dbfile)
         cursor = con.cursor()
-        cursor.execute("""SELECT DISTINCT strftime('%m', timestamp) as month 
-                          FROM script_usage ORDER by month """)
-        month_ls_raw = cursor.fetchall()
-        month_ls = [i[0] for i in month_ls_raw]
-        month_ls.insert(0, 'All')
+
         cursor.execute("""SELECT DISTINCT strftime('%Y', timestamp) as month 
                           FROM script_usage ORDER by month """)
         year_ls_raw = cursor.fetchall()
-        year_ls = [i[0] for i in year_ls_raw]
-        year_ls.insert(0, 'All')
+        self.year_ls.extend(map(lambda x: x[0], year_ls_raw))
+
+        cursor.execute("""SELECT DISTINCT strftime('%m', timestamp) as month 
+                          FROM script_usage ORDER by month """)
+        month_ls_raw = cursor.fetchall()
+        self.month_ls.extend(map(lambda x: x[0], month_ls_raw))
+
         cursor.close()
         con.close()
-        self.month_ls_cmb['values'] = month_ls
-        self.month_ls_cmb.current(month_ls.index('All'))
-        self.year_ls_cmb['values'] = year_ls
-        self.year_ls_cmb.current(year_ls.index('All'))
+
+        self.month_ls_cmb['values'] = self.month_ls
+        self.month_ls_cmb.current(0)
+        self.year_ls_cmb['values'] = self.year_ls
+        self.year_ls_cmb.current(0)
         self.sort_cmb['values'] = self.colums
-        self.sort_cmb.current(3)
+        self.sort_cmb.current(self.colums.index(self.order))
         self.subsort_cmb['values'] = self.colums
-        self.subsort_cmb.current(4)
+        self.subsort_cmb.current(self.colums.index(self.suborder))
         self.generateTable()
 
 

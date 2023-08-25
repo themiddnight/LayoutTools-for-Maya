@@ -5,9 +5,8 @@ from datetime import datetime
 
 class LogScriptUsage:
 	def __init__(self):
-		self.path = 'D:/' # <------ path to save database file
+		self.path = 'C:/' # <------ path to save database file
 		self.dbfile = 'layouttool_script_usage.db'
-		self.csvfile = 'layouttool_script_usage.csv'
 		self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		self.user = os.getenv('USERPROFILE').split('\\')[-1]
 		self.filename = cmds.file(q = True, sn = True).split('/')[-1]

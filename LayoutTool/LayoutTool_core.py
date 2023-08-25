@@ -4,15 +4,19 @@ import os
 import json
 import scripts
 
+
 class LayoutToolCore:
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+
         self.pref_default = {"refCam": "persp", 
                         "customScriptBtn": ["RxPlacementToOffset", "BakeShakeCam_UI", "DeleteShot", "PublishCheckTool_UI"], 
                         "lensList": [24, 28, 35, 50, 85, 135]}
 
         self.pref_path = os.path.join(os.getenv('USERPROFILE'), 'Documents\\maya\\')
         self.scripts_path = os.path.dirname(scripts.__file__) + '/'
+        self.root = self.scripts_path.split('\\')[0]
             
+
     def getPref(self, data):
         def setDefault():
             with open(self.pref_path + 'LayoutTool_pref.json', 'w') as file:
@@ -37,7 +41,12 @@ class LayoutToolCore:
             else:
                 pass
         return value
+
+
+    def openCustomDir(self, *args):
+        os.startfile('%s/manual' %self.root)
             
+
     def savePref(self, data, value):
         with open(self.pref_path + 'LayoutTool_pref.json', 'r') as file:
             pref = json.load(file)
@@ -45,11 +54,13 @@ class LayoutToolCore:
         with open(self.pref_path + 'LayoutTool_pref.json', 'w') as file:
             json.dump(pref, file)
             
+
     def getScripts(self):
         scriptsPath = os.listdir(self.scripts_path)
         scripts = list(i.split('.')[0] for i in scriptsPath if '.pyc' not in i and '__init__' not in i and '.DS_Store' not in i)
         return scripts
         
+
     def getScripDescription(self, scriptName):
         descriptionTxLs = []
         with open(self.scripts_path + scriptName + '.py') as script:
@@ -59,25 +70,27 @@ class LayoutToolCore:
                 descriptionTxLs.append(i)
         return ''.join(descriptionTxLs)
 
-    def runScript(self, scriptName):
+
+    def runScript(self, scriptName, runfrom):
         pyCmd = '''from scripts import %s \nreload(%s) \n%s.run()''' %(scriptName, scriptName, scriptName)
         exec(pyCmd)
+        self.logData(scriptName, runfrom) # if don't want to log usage data, disable this
+
+
+    def logData(self, scriptName, runfrom):
+        import logScriptUsage
+        reload(logScriptUsage)
+        logScriptUsage.LogScriptUsage().addData(scriptName, runfrom)
         
+
     def addScriptToShelf(self, scriptName):
         current_shelf = mel.eval("$shelves = `tabLayout -q -selectTab $gShelfTopLevel`")
-        """from LayoutTool import scriptUsage
-            from scripts import %s 
-            reload(scriptUsage)
-            reload(%s) 
-            script = '%s'
-            runfrom = 'shelf'
-            %s.run()"""
-        pyCmd = """
-from scripts import %s 
-reload(%s) 
-script = '%s'
-runfrom = 'shelf'
-%s.run()""" %(scriptName, scriptName, scriptName, scriptName)
+        pyCmd = """root = '%s' 
+import sys
+if root not in sys.path: sys.path.append(root)
+from LayoutTool import LayoutTool_core
+reload(LayoutTool_core)
+LayoutTool_core.LayoutToolCore().runScript('%s', 'shelf')""" %(self.root, scriptName)
         pm.shelfButton(
             image = 'pythonFamily.png',
             command = pyCmd,

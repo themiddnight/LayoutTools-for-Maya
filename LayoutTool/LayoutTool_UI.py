@@ -2,21 +2,19 @@ from imp import reload
 import pymel.core as pm
 import LayoutTool_core
 import LayoutTool_ctrlList
-import logScriptUsage
 reload(LayoutTool_core)
 reload(LayoutTool_ctrlList)
-reload(logScriptUsage)
 
 
 ################################
 
 class LayoutToolUI:
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
+        self.selMode = False
         self.shakeValue = []
         self.core = LayoutTool_core.LayoutToolCore()
         self.ctrl = LayoutTool_ctrlList.LayoutToolCtrl()
-        self.logData = logScriptUsage.LogScriptUsage()
 
         self.camLs, self.assetLs = self.ctrl.getNameList()
         self.scriptLs = self.core.getScripts()
@@ -40,7 +38,7 @@ class LayoutToolUI:
             self.row4 = pm.rowLayout(nc = 2, adj = 1)
             with self.row4:
                 pm.text(l = 'Ref. cam lens (mm):  ', al = 'left')
-                pm.button(l = '...', h = 15, c = self.setCustomLens)
+                pm.button(l = '...', h = 15, c = SetCustomLensUI)
             self.rowCol2 = pm.rowColumnLayout(nc = 3, cw = ([1,81],[2,81],[3,81]), cs = ([2,5],[3,5]), rs = ([1,5]))
             with self.rowCol2:
                 for i in self.core.getPref("lensList"):
@@ -71,13 +69,13 @@ class LayoutToolUI:
                                   append = self.ctrl.assetCtrlLs, 
                                   lf = self.ctrl.assetCtrlFn, 
                                   sc = self.selectAssetCtrl)
-                pm.checkBox('multiSelChk', l = 'Multi-selection')
+                pm.checkBox('multiSelChk', l = 'Multi-selection', cc = self.setSelectionMode)
                 pm.button(l = 'Clear Selection', c = self.clearSelection)
             pm.separator()
             self.row3 = pm.rowLayout(nc = 2, adj = 1)
             with self.row3:
                 pm.text(l = 'Shortcuts  ', al = 'left', fn = 'boldLabelFont')
-                pm.button(l = '...', h = 15, c = self.setCustomScript)
+                pm.button(l = '...', h = 15, c = SetCustomScriptBtnUI)
             self.rowCol4 = pm.rowColumnLayout(nc = 2, cw = ([1,125],[2,125]), cs = ([2,5]), rs = ([1,5]))
             with self.rowCol4:
                 pm.button(l = 'Copy Shake Value', c = self.copyShake)
@@ -101,7 +99,7 @@ class LayoutToolUI:
             with row2:
                 pm.button(l = 'Run', w = 100, c = self.runScriptTx)
                 pm.button(l = 'Add to Shelf', c = self.addScriptToShelf)
-                pm.button(l = '?', w = 25, c = self.openManual)
+                pm.button(l = '?', w = 25, c = self.core.openCustomDir)
                 
         ################################
         
@@ -119,30 +117,14 @@ class LayoutToolUI:
         
     def runScriptTx(self, *args):
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
-        script = scriptName
-        runfrom = 'tool'
-        self.logData.addData(script, runfrom)
-        self.core.runScript(scriptName)
+        self.core.runScript(scriptName, 'tool')
         
     def runScriptBtn(self, scriptName):
-        script = scriptName
-        runfrom = 'button'
-        self.logData.addData(script, runfrom)
-        self.core.runScript(scriptName)
+        self.core.runScript(scriptName, 'button')
         
     def addScriptToShelf(self, *args):
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
         self.core.addScriptToShelf(scriptName)
-    
-    def openManual(self, *args):
-        # os.startfile('/')
-        pass
-        
-    def setCustomLens(self, *args):
-        SetCustomLensUI()
-        
-    def setCustomScript(self, *args):
-        SetCustomScriptBtnUI()
         
     # -------- ref cam
     def setRefCamName(self, *args):
@@ -161,21 +143,26 @@ class LayoutToolUI:
         camCtrl = pm.textScrollList('camCtrlTx', q = True, si = True)
         assetName = pm.textScrollList('assetNameTx', q = True, si = True)
         assetCtrl = pm.textScrollList('assetCtrlTx', q = True, si = True)
-        self.ctrl.selectControllers(camName, camCtrl, assetName, assetCtrl)
+        self.ctrl.selectControllers(self.selMode, camName, camCtrl, assetName, assetCtrl)
         
     def selectCamCtrl(self, *args):
-        mode = pm.checkBox('multiSelChk', q = True, v = True)
-        if not mode:
+        if not self.selMode:
             pm.textScrollList('assetNameTx', e = True, da = True)
             pm.textScrollList('assetCtrlTx', e = True, da = True)
-        self.selectCtrl()
+        self.selectCtrl(self.selMode)
         
     def selectAssetCtrl(self, *args):
-        mode = pm.checkBox('multiSelChk', q = True, v = True)
-        if not mode:
+        if not self.selMode:
             pm.textScrollList('camNameTx', e = True, da = True)
             pm.textScrollList('camCtrlTx', e = True, da = True)
-        self.selectCtrl()
+        self.selectCtrl(self.selMode)
+
+    def setSelectionMode(self, *args):
+        mode = pm.checkBox('multiSelChk', q = True, v = True)
+        if mode:
+            self.selMode = True
+        else:
+            self.selMode = False
         
     def selectCurrentShot(self, *args):
         pm.textScrollList('camCtrlTx', e = True, da = True)
@@ -195,7 +182,7 @@ class LayoutToolUI:
         pm.textScrollList('camCtrlTx', e = True, da = True)
         pm.textScrollList('assetNameTx', e = True, da = True)
         pm.textScrollList('assetCtrlTx', e = True, da = True)
-        self.selectCtrl()
+        self.selectCtrl(self.selMode)
         
     # -------- copy/paste shake
     
@@ -207,7 +194,7 @@ class LayoutToolUI:
 
 
 class SetCustomLensUI(LayoutToolUI):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         self.core = LayoutTool_core.LayoutToolCore()
         self.ctrl = LayoutTool_ctrlList.LayoutToolCtrl()
@@ -235,7 +222,7 @@ class SetCustomLensUI(LayoutToolUI):
                     pm.button(l = 'OK', w = 100, c = self.okBtn)
                     pm.button(l = 'Cancel', w = 100, c = self.cancelBtn)
         
-        pm.showWindow('setLensWin')
+        #pm.showWindow('setLensWin')
     
     def okBtn(self, *args):
         lensLs = []
@@ -247,17 +234,14 @@ class SetCustomLensUI(LayoutToolUI):
         lensLs.append(pm.intField('int6', q = True, v = True))
         self.core.savePref("lensList", lensLs)
         pm.deleteUI('setLensWin')
-        self.runMainUI()
+        LayoutToolUI()
         
     def cancelBtn(self, *args):
         pm.deleteUI('setLensWin')
 
-    def runMainUI(self):
-        LayoutToolUI()
-
 
 class SetCustomScriptBtnUI(LayoutToolUI):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         self.core = LayoutTool_core.LayoutToolCore()
         self.ctrl = LayoutTool_ctrlList.LayoutToolCtrl()
@@ -310,10 +294,7 @@ class SetCustomScriptBtnUI(LayoutToolUI):
                         pm.separator(style = 'none')
                 pm.separator(style = 'none', h = 5)
 
-        pm.showWindow('setBtnWin')
-
-    def runMainUI(self):
-        LayoutToolUI()
+        #pm.showWindow('setBtnWin')
 
     def getScriptDescription(self, *args):
         reload(LayoutTool_core)
@@ -356,7 +337,7 @@ class SetCustomScriptBtnUI(LayoutToolUI):
     def okBtn(self, *args):
         self.core.savePref("customScriptBtn", pm.textScrollList('customScriptTx', q = True, ai = True))
         pm.deleteUI('setBtnWin')
-        self.runMainUI()
+        LayoutToolUI()
         
     def cancelBtn(self, *args):
         pm.deleteUI('setBtnWin')

@@ -2,9 +2,6 @@ import pymel.core as pm
 
 class LayoutToolCtrl:
     def __init__(self):
-        self.assetIndicator = ['char', 'prop', 'vhcl', 'CMB']
-        self.camIndicator   = '*:camera'
-        self.ctrlName       = '*:placement_ctrl'
 
         self.camCtrlLs = [
                         'placement_ctrl', 
@@ -35,7 +32,11 @@ class LayoutToolCtrl:
                         (2,'boldLabelFont'), 
                         (3,'boldLabelFont')
                     ]
-        self.shakeValue = []
+
+        self.assetIndicator = ['char', 'prop', 'vhcl', 'CMB']
+        self.camIndicator   = '*:camera'
+        self.ctrlName       = '*:placement_ctrl'
+        self.shakeValue     = []
 
     def getCtrlList(self):
         return self.camCtrlLs, self.camCtrlFn, self.assetCtrlLs, self.assetCtrlFn
@@ -56,8 +57,9 @@ class LayoutToolCtrl:
 
     ####################################
 
-    def selectControllers(self, camName, camCtrl, assetName, assetCtrl):
-        pm.select(cl = True)
+    def selectControllers(self, mode, camName, camCtrl, assetName, assetCtrl):
+        if mode == False:
+            pm.select(cl = True)
         if camName and camCtrl:
             for cam in camName:
                 for ctrl in camCtrl:

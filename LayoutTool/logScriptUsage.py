@@ -5,7 +5,9 @@ from datetime import datetime
 
 class LogScriptUsage:
 	def __init__(self):
-		self.path = 'C:/' # <------ path to save database file
+		
+		self.path = 'C:/' # <--- database path. same as "view_usage_stat.py | Model()"
+		
 		self.dbfile = 'layouttool_script_usage.db'
 		self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		self.user = os.getenv('USERPROFILE').split('\\')[-1]

@@ -66,14 +66,13 @@ class UsageStatUI(Tk):
         table_frm.pack(fill='both', expand=True)
         coldata_w_ls = [60, 150, 100, 200, 70, 300]
         coldata_s_ls = [0, 1, 1, 1, 1, 1]
-        sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal')
+        self.tabledata = ttk.Treeview(table_frm, column=self.colums, show='headings', selectmode='extended')
+        sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal', command=self.tabledata.xview)
         sclx_tabledata.pack(side='bottom', fill='x')
-        scly_tabledata = ttk.Scrollbar(table_frm)
+        scly_tabledata = ttk.Scrollbar(table_frm, command=self.tabledata.yview)
         scly_tabledata.pack(side='right', fill='y')
-        self.tabledata = ttk.Treeview(table_frm, column=self.colums, show='headings', 
-                                  selectmode='extended', 
-                                  xscrollcommand=sclx_tabledata.set,
-                                  yscrollcommand=scly_tabledata.set)
+        self.tabledata.configure(xscrollcommand=sclx_tabledata.set,
+                                yscrollcommand=scly_tabledata.set)
         self.tabledata.pack(fill='both', expand=True)
 
         for i in range(6):
@@ -91,13 +90,13 @@ class UsageStatUI(Tk):
         
         tablecount_frm = ttk.Frame(count_frm)
         tablecount_frm.pack(fill='both', expand=True)
-        sclx_tablesum = ttk.Scrollbar(tablecount_frm, orient='horizontal')
+        self.tablecount = ttk.Treeview(tablecount_frm, show='headings')
+        sclx_tablesum = ttk.Scrollbar(tablecount_frm, orient='horizontal', command=self.tablecount.xview)
         sclx_tablesum.pack(side='bottom', fill='x')
-        scly_tablesum = ttk.Scrollbar(tablecount_frm)
+        scly_tablesum = ttk.Scrollbar(tablecount_frm, command=self.tablecount.yview)
         scly_tablesum.pack(side='right', fill='y')
-        self.tablecount = ttk.Treeview(tablecount_frm, show='headings',
-                                       xscrollcommand=sclx_tablesum.set,
-                                       yscrollcommand=scly_tablesum.set)
+        self.tablecount.configure(xscrollcommand=sclx_tablesum.set,
+                                  yscrollcommand=scly_tablesum.set)
         self.tablecount.pack(fill='both', expand=True)
 
 

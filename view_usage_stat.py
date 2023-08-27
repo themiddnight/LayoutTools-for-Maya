@@ -1,36 +1,28 @@
-try:
-    # Python 3
+try:  # Python 3
     from tkinter import Tk
-    from tkinter import filedialog as FileDialog
     from tkinter import ttk
-except ImportError:
-    # Python 2
+except ImportError:  # Python 2
     from Tkinter import Tk
-    import tkFileDialog as FileDialog
     import ttk
-import sqlite3
-import os
-import csv
-from datetime import datetime
 
 #### set database path in Model() first" ####
 
 class UsageStatUI(Tk):
-    def __init__(self, *args, **kwargs):
-        Tk.__init__(self, *args, **kwargs)
+    def __init__(self, control):
+        Tk.__init__(self)
 
-        self.control = Control(self)
+        self.control = control
         self.colums = self.control.dataCols
 
         self.title('Layout Scripts Statistic')
         self.geometry('1000x700+300+100')
 
+
+        # --- Data table ---
+
+        # input widgets
         data_frm = ttk.Frame(self)
         data_frm.pack(fill='both', expand=True, padx=10, pady=10)
-
-
-        # --- create input widget ---
-
         func_frm = ttk.Frame(data_frm)
         func_frm.pack(fill='x', pady=(0,5))
         data_l_frm = ttk.Frame(func_frm)
@@ -54,46 +46,57 @@ class UsageStatUI(Tk):
         data_r_frm = ttk.Frame(func_frm)
         data_r_frm.pack(side='right')
         ttk.Label(data_r_frm, text='').grid(row=0, column=0, pady=(0,5))
-        exportdata_btn = ttk.Button(data_r_frm, text='Export CSV', 
-                                     width = 15, command=self.control.exportDataCsv)
+        exportdata_btn = ttk.Button(data_r_frm, text='Export CSV', width = 15, 
+                                     command=lambda: self.control.exportCsv('data'))
         exportdata_btn.grid(row=1, column=0, sticky='s')
-
-
-        # --- create table widget ---
 
         # data table
         table_frm = ttk.Frame(data_frm)
         table_frm.pack(fill='both', expand=True)
-        coldata_w_ls = [60, 150, 100, 200, 70, 300]
-        coldata_s_ls = [0, 1, 1, 1, 1, 1]
-        self.tabledata = ttk.Treeview(table_frm, column=self.colums, show='headings', selectmode='extended')
-        sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal', command=self.tabledata.xview)
+        self.tabledata = ttk.Treeview(table_frm, column=self.colums, 
+                                      show='headings', selectmode='extended')
+        sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal', 
+                                       command=self.tabledata.xview)
         sclx_tabledata.pack(side='bottom', fill='x')
-        scly_tabledata = ttk.Scrollbar(table_frm, command=self.tabledata.yview)
+        scly_tabledata = ttk.Scrollbar(table_frm, 
+                                       command=self.tabledata.yview)
         scly_tabledata.pack(side='right', fill='y')
         self.tabledata.configure(xscrollcommand=sclx_tabledata.set,
                                 yscrollcommand=scly_tabledata.set)
         self.tabledata.pack(fill='both', expand=True)
-
+        coldata_w_ls = [60, 150, 100, 200, 70, 300]
+        coldata_s_ls = [0, 1, 1, 1, 1, 1]
         for i in range(6):
-            self.tabledata.column('{}'.format(i), width=coldata_w_ls[i], stretch=coldata_s_ls[i])
+            self.tabledata.column('{}'.format(i), width=coldata_w_ls[i], 
+                                  stretch=coldata_s_ls[i])
             self.tabledata.heading('{}'.format(i), text=self.colums[i])
 
         ttk.Separator(self, orient='horizontal').pack(padx = 10, fill='x')
+
+
+        # --- Count table ---
+        
+        # button widgets
+        count_frm = ttk.Frame(self)
+        count_frm.pack(fill='both', expand=True, padx=10, pady=10)
+        countBtns_frm = ttk.Frame(count_frm)
+        countBtns_frm.pack(anchor='e', pady=(0,10))
+        viewCountGrph_btn = ttk.Button(countBtns_frm, text='View Graph', 
+                                     width = 15)
+        viewCountGrph_btn.pack(padx=10, side='left')
+        exportcount_btn = ttk.Button(countBtns_frm, text='Export CSV', width = 15, 
+                                     command= lambda: self.control.exportCsv('count'))
+        exportcount_btn.pack(side='left')
         
         # count table
-        count_frm = ttk.Frame(self)
-        count_frm.pack(fill='both', expand=True, padx=10, pady=(0,10))
-        exportcount_btn = ttk.Button(count_frm, text='Export CSV', 
-                                     width = 15, command=self.control.exportCountCsv)
-        exportcount_btn.pack(pady=10, anchor='e')
-        
         tablecount_frm = ttk.Frame(count_frm)
         tablecount_frm.pack(fill='both', expand=True)
         self.tablecount = ttk.Treeview(tablecount_frm, show='headings')
-        sclx_tablesum = ttk.Scrollbar(tablecount_frm, orient='horizontal', command=self.tablecount.xview)
+        sclx_tablesum = ttk.Scrollbar(tablecount_frm, orient='horizontal', 
+                                      command=self.tablecount.xview)
         sclx_tablesum.pack(side='bottom', fill='x')
-        scly_tablesum = ttk.Scrollbar(tablecount_frm, command=self.tablecount.yview)
+        scly_tablesum = ttk.Scrollbar(tablecount_frm, 
+                                      command=self.tablecount.yview)
         scly_tablesum.pack(side='right', fill='y')
         self.tablecount.configure(xscrollcommand=sclx_tablesum.set,
                                   yscrollcommand=scly_tablesum.set)
@@ -102,69 +105,61 @@ class UsageStatUI(Tk):
 
         # --- bindings ---
 
-        self.month_ls_cmb.bind('<<ComboboxSelected>>', self.control.generateTables)
-        self.year_ls_cmb.bind('<<ComboboxSelected>>', self.control.generateTables)
-        self.sort_cmb.bind('<<ComboboxSelected>>', self.control.generateTables)
-        self.subsort_cmb.bind('<<ComboboxSelected>>', self.control.generateTables)
+        self.month_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.year_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.sort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.subsort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.tabledata.bind('<<TreeviewSelect>>', self.control.showSelectedCount)
 
-        self.control.initialize()
 
-
+try:  # Python 3
+    from tkinter import filedialog as FileDialog
+except ImportError:  # Python 2
+    import tkFileDialog as FileDialog
+from datetime import datetime
+import os
 class Control:
-    def __init__(self, view):
-        self.view = view
-        self.model = Model()
+    def __init__(self):
 
         self.dataCols = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
-        self.order    = 'id'
-        self.suborder = 'script'
+        self.order    = 'script'
+        self.suborder = 'runfrom'
         self.year_ls  = list(['All'])
         self.month_ls = list(['All'])
-        
+        self.year, self.month = datetime.now().strftime('%Y-%m').split('-')
 
-    def initialize(self):
-        year, month = datetime.now().strftime('%Y-%m').split('-')
+        self.view  = UsageStatUI(self)
+        self.model = Model()
+        
         year_ls_raw, month_ls_raw = self.model.getDateLs()
         self.year_ls.extend(map(lambda x: x[0], year_ls_raw))
         self.month_ls.extend(map(lambda x: x[0], month_ls_raw))
         self.view.month_ls_cmb['values'] = self.month_ls
-        self.view.month_ls_cmb.current(self.month_ls.index(month))
+        self.view.month_ls_cmb.current(self.month_ls.index(self.month))
         self.view.year_ls_cmb['values'] = self.year_ls
-        self.view.year_ls_cmb.current(self.year_ls.index(year))
+        self.view.year_ls_cmb.current(self.year_ls.index(self.year))
         self.view.sort_cmb['values'] = self.dataCols
         self.view.sort_cmb.current(self.dataCols.index(self.order))
         self.view.subsort_cmb['values'] = self.dataCols
         self.view.subsort_cmb.current(self.dataCols.index(self.suborder))
-        self.generateTables()
+        self.refresh()
 
 
-    def generateTables(self, *args):
+    def refresh(self, *args):
+        self.year     = self.view.year_ls_cmb.get()
+        self.month    = self.view.month_ls_cmb.get()
+        self.order    = self.view.sort_cmb.get()
+        self.suborder = self.view.subsort_cmb.get()
         self.generateDataTable()
         self.generateCountTable()
 
 
-    def getDataTable(self, *args):
-        year          = self.view.year_ls_cmb.get()
-        month         = self.view.month_ls_cmb.get()
-        self.order    = self.view.sort_cmb.get()
-        self.suborder = self.view.subsort_cmb.get()
-        return self.model.getData(year, month, self.order, self.suborder)
-
-
     def generateDataTable(self, *args):
         self.view.tabledata.delete(*self.view.tabledata.get_children())
-        for i in self.getDataTable():
+        data = self.model.getData(self.year, self.month, self.order, self.suborder)
+        for i in data:
             self.view.tabledata.insert(parent = '', index='end', iid=i[0]
                 ,values=(i[0], i[1], i[2], i[3], i[4], i[5]))
-            
-
-    def getCountTable(self, *args):
-        year          = self.view.year_ls_cmb.get()
-        month         = self.view.month_ls_cmb.get()
-        self.order    = self.view.sort_cmb.get()
-        self.suborder = self.view.subsort_cmb.get()
-        return self.model.getCountData(year, month, self.order, self.suborder)
 
 
     def generateCountTable(self, *args):
@@ -173,10 +168,13 @@ class Control:
         colLs.extend(self.model.getSuborderList(self.suborder))
         colLs.append('total')
         self.view.tablecount.configure(column=colLs)
+        data = self.model.getCountData(self.year, self.month, self.order, self.suborder)
         for i in range(len(colLs)):
-            self.view.tablecount.column('{}'.format(i), width = 170 if i==0 else 50, stretch = 0)
+            self.view.tablecount.column('{}'.format(i), 
+                                        width = 170 if i==0 else 50, 
+                                        stretch = 0)
             self.view.tablecount.heading('{}'.format(i), text=colLs[i])
-        for i in self.getCountTable():
+        for i in data:
             self.view.tablecount.insert(parent = '', index='end', iid=i[0]
                 ,values=(i))
 
@@ -186,61 +184,35 @@ class Control:
         self.view.sel_count_l.config(text = 'Selected rows: {}'.format(sel))
 
 
-    def exportDataCsv(self, *args):
-        data     = self.getDataTable()
-        month    = self.view.month_ls_cmb.get()
-        year     = self.view.year_ls_cmb.get()
+    def exportCsv(self, table, *args):
         savepath = os.path.expanduser('~') + '/Documents'
-        savename = 'script_usage_data_{}-{}'.format(month, year)
+        month = self.view.month_ls_cmb.get()
+        year  = self.view.year_ls_cmb.get()
+        if table == 'data':
+            col = self.dataCols
+            data = self.getDataTable()
+            savename = 'scriptUsage_data_{}-{}'.format(
+                month, year)
+        elif table == 'count':
+            col    = [self.order]
+            col.extend(self.model.getSuborderList(self.suborder))
+            col.append('total')
+            data = self.getCountTable()
+            savename = 'scriptUsage_count_{}-{}_{}-{}'.format(
+                self.order, self.suborder, month, year)
         csvfile  = FileDialog.asksaveasfilename(
             initialdir=savepath, initialfile = savename, 
             filetypes=([('CSV','*.csv')]), defaultextension='.csv')
         if csvfile:
-            try:
-                # Python 2
-                with open(csvfile, 'wb') as f:
-                    csv_writer = csv.writer(f)
-                    csv_writer.writerow(self.dataCols)
-                    csv_writer.writerows(data)
-            except TypeError:
-                # Python 3
-                with open(csvfile, 'w') as f:
-                    csv_writer = csv.writer(f)
-                    csv_writer.writerow(self.dataCols)
-                    csv_writer.writerows(data)
+            self.model.saveCsv(col, data, csvfile)
 
 
-    def exportCountCsv(self, *args):
-        data     = self.getCountTable()
-        month    = self.view.month_ls_cmb.get()
-        year     = self.view.year_ls_cmb.get()
-        colLs    = [self.order]
-        colLs.extend(self.model.getSuborderList(self.suborder))
-        colLs.append('total')
-        savepath = os.path.expanduser('~') + '/Documents'
-        savename = 'script_usage_{}-{}_{}-{}'.format(self.order, self.suborder, month, year)
-        csvfile  = FileDialog.asksaveasfilename(
-            initialdir=savepath, initialfile = savename, 
-            filetypes=([('CSV','*.csv')]), defaultextension='.csv')
-        if csvfile:
-            try:
-                # Python 2
-                with open(csvfile, 'wb') as f:
-                    csv_writer = csv.writer(f)
-                    csv_writer.writerow(colLs)
-                    csv_writer.writerows(data)
-            except TypeError:
-                # Python 3
-                with open(csvfile, 'w') as f:
-                    csv_writer = csv.writer(f)
-                    csv_writer.writerow(colLs)
-                    csv_writer.writerows(data)
-
-
+import sqlite3
+import csv
 class Model:
     def __init__(self):
 
-        self.dbpath   = 'C:/' # <---- database path. same as "LayoutTool/logScriptUsage.py"
+        self.dbpath   = '/Users/Pathompong/Downloads/' # <---- database path. same as "LayoutTool/logScriptUsage.py"
 
         self.dbfile   = 'layouttool_script_usage.db'
         self.connection = sqlite3.connect(self.dbpath + self.dbfile)
@@ -299,7 +271,7 @@ class Model:
         suborderLs = self.getSuborderList(suborder)
         sqlcmd = 'SELECT {}, \n'.format(order)
         for i in suborderLs:
-            sqlcmd = sqlcmd + '    sum(case when {} = "{}" then 1 else 0 end) AS "{}", \n'.format(suborder, i, i)
+            sqlcmd = sqlcmd + 'sum(case when {} = "{}" then 1 else 0 end) AS "{}", \n'.format(suborder, i, i)
         sqlcmd = sqlcmd + 'count(*) AS total \nFROM script_usage \n'
         if month == 'All' and year == 'All':
             pass
@@ -315,6 +287,21 @@ class Model:
         data = cursor.fetchall()
         cursor.close()
         return data
+    
+
+    def saveCsv(self, col, data, path):
+        try:                # Python 2
+            with open(path, 'wb') as f:
+                csv_writer = csv.writer(f)
+                csv_writer.writerow(col)
+                csv_writer.writerows(data)
+        except TypeError:   # Python 3
+            with open(path, 'w') as f:
+                csv_writer = csv.writer(f)
+                csv_writer.writerow(col)
+                csv_writer.writerows(data)
 
 
-UsageStatUI().mainloop()
+if __name__ == '__main__':
+    app = Control()
+    app.view.mainloop()

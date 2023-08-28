@@ -156,8 +156,8 @@ class Control:
 
     def generateDataTable(self, *args):
         self.view.tabledata.delete(*self.view.tabledata.get_children())
-        data = self.model.getData(self.year, self.month, self.order, self.suborder)
-        for i in data:
+        self.data = self.model.getData(self.year, self.month, self.order, self.suborder)
+        for i in self.data:
             self.view.tabledata.insert(parent = '', index='end', iid=i[0]
                 ,values=(i[0], i[1], i[2], i[3], i[4], i[5]))
 
@@ -168,13 +168,13 @@ class Control:
         colLs.extend(self.model.getSuborderList(self.suborder))
         colLs.append('total')
         self.view.tablecount.configure(column=colLs)
-        data = self.model.getCountData(self.year, self.month, self.order, self.suborder)
+        self.countData = self.model.getCountData(self.year, self.month, self.order, self.suborder)
         for i in range(len(colLs)):
             self.view.tablecount.column('{}'.format(i), 
                                         width = 170 if i==0 else 50, 
                                         stretch = 0)
             self.view.tablecount.heading('{}'.format(i), text=colLs[i])
-        for i in data:
+        for i in self.countData:
             self.view.tablecount.insert(parent = '', index='end', iid=i[0]
                 ,values=(i))
 
@@ -186,21 +186,21 @@ class Control:
 
     def exportCsv(self, table, *args):
         savepath = os.path.expanduser('~') + '/Documents'
-        month = self.view.month_ls_cmb.get()
-        year  = self.view.year_ls_cmb.get()
+        month    = self.view.month_ls_cmb.get()
+        year     = self.view.year_ls_cmb.get()
         if table == 'data':
-            col = self.dataCols
-            data = self.getDataTable()
+            col  = self.dataCols
+            data = self.data
             savename = 'scriptUsage_data_{}-{}'.format(
                 month, year)
         elif table == 'count':
-            col    = [self.order]
+            col  = [self.order]
             col.extend(self.model.getSuborderList(self.suborder))
             col.append('total')
-            data = self.getCountTable()
+            data = self.countData
             savename = 'scriptUsage_count_{}-{}_{}-{}'.format(
                 self.order, self.suborder, month, year)
-        csvfile  = FileDialog.asksaveasfilename(
+        csvfile = FileDialog.asksaveasfilename(
             initialdir=savepath, initialfile = savename, 
             filetypes=([('CSV','*.csv')]), defaultextension='.csv')
         if csvfile:
@@ -212,10 +212,10 @@ import csv
 class Model:
     def __init__(self):
 
-        self.dbpath   = '/Users/Pathompong/Downloads/' # <---- database path. same as "LayoutTool/logScriptUsage.py"
+        self.dbpath = 'C:/' # <---- database path. same as "LayoutTool/logScriptUsage.py"
 
-        self.dbfile   = 'layouttool_script_usage.db'
-        self.connection = sqlite3.connect(self.dbpath + self.dbfile)
+        self.dbfile = 'layouttool_script_usage.db'
+        self.connection = sqlite3.connect(self.dbpath + '/' + self.dbfile)
 
 
     def getDateLs(self):

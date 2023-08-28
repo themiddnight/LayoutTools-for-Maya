@@ -14,7 +14,7 @@ class LogScriptUsage:
 		self.filename = cmds.file(q = True, sn = True).split('/')[-1]
 
 	def addData(self, script, runfrom):
-		con = sqlite3.connect(self.path + self.dbfile)
+		con = sqlite3.connect(self.path + '/' + self.dbfile)
 		cursor = con.cursor()
 
 		cursor.execute("""

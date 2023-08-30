@@ -16,7 +16,7 @@ class UsageStatUI(Tk):
         self.title('Layout Scripts Statistic')
         self.geometry('1000x800+300+100')
 
-        pw = PanedWindow(self, orient='vertical', sashpad=15, sashrelief='solid')
+        pw = PanedWindow(self, orient='vertical', sashpad=15, sashrelief='raised')
         pw.pack(fill='both', expand=True, padx=10, pady=10)
         
 
@@ -41,9 +41,14 @@ class UsageStatUI(Tk):
         self.sort_cmb.grid(row=0, column=3)
         ttk.Label(data_l_frm, text='Subsort:').grid(row=1, column=2, sticky='e')
         self.subsort_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
+
+        exportdata_btn = ttk.Button(data_l_frm, text='Refresh', width = 15, 
+                                     command=self.control.refresh)
+        exportdata_btn.grid(row=1, column=4, padx=20)
+
         self.subsort_cmb.grid(row=1, column=3)
         self.sel_count_l = ttk.Label(data_l_frm, text='Selected rows: 0')
-        self.sel_count_l.grid(row=1, column=4, padx=20)
+        self.sel_count_l.grid(row=1, column=5)
 
         data_r_frm = ttk.Frame(func_frm)
         data_r_frm.pack(side='right')
@@ -146,7 +151,7 @@ import os
 class Control:
     def __init__(self):
 
-        self.dataCols = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
+        self.dataCols = ('id', 'date', 'user', 'script', 'runfrom', 'filename')
         self.order    = 'script'
         self.suborder = 'runfrom'
         self.date     = datetime.now().strftime('%Y-%m')
@@ -222,7 +227,7 @@ class Control:
             df.plot(x = colLs[0], kind='bar', stacked=True, fontsize=8, 
                     width=0.8, ax=ax, xticks = [],
                     title='{} - {}'.format(self.order, self.suborder))
-            ax.legend(fontsize = 9)
+            ax.legend(fontsize = 9, draggable = True)
             x = [i[0] for i in data]
             for i in range(len(x)):
                 ax.annotate(x[i], xy = (i, 0), xytext = (-3,10), rotation = 90, 
@@ -279,6 +284,10 @@ class Model:
     
 
     def getData(self, dateFrom, dateTo, order, suborder):
+        if order == 'date':
+            order = 'DATE(timestamp)'
+        if suborder == 'date':
+            suborder = 'DATE(timestamp)'
         cursor = self.connection.cursor()
         cursor.execute("""
             SELECT * FROM script_usage 
@@ -291,6 +300,8 @@ class Model:
     
 
     def getSuborderList(self, suborder):
+        if suborder == 'date':
+            suborder = 'DATE(timestamp)'
         cursor = self.connection.cursor()
         cursor.execute("""
             SELECT DISTINCT {}
@@ -302,6 +313,10 @@ class Model:
     
 
     def getCountData(self, dateFrom, dateTo, order, suborder):
+        if order == 'date':
+            order = 'DATE(timestamp)'
+        if suborder == 'date':
+            suborder = 'DATE(timestamp)'
         suborderLs = self.getSuborderList(suborder)
         sqlcmd = 'SELECT {}, \n'.format(order)
         for i in suborderLs:
@@ -311,8 +326,7 @@ class Model:
                     count(*) AS total
                     FROM script_usage
                     WHERE timestamp BETWEEN '{}-01' and '{}-32'
-                    GROUP BY {}
-                    ORDER BY total DESC;""".format(
+                    GROUP BY {}""".format(
             dateFrom, dateTo, order)
         cursor = self.connection.cursor()
         cursor.execute(sqlcmd)

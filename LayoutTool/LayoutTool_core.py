@@ -76,11 +76,11 @@ class LayoutToolCore:
     def getScripDescription(self, scriptName):
         with open(self.scripts_path + scriptName + '.py') as f:
             txt = f.read()
-            matchA = "'''([\\w\\W]*?)'''"
-            matchB = '"""([\\w\\W]*?)"""'
-        if re.findall(matchA, txt):
+        matchA = "'''([\\w\\W]*?)'''"
+        matchB = '"""([\\w\\W]*?)"""'
+        if re.findall(matchA, txt) and txt[:3] == "'''":
             return re.findall(matchA, txt)[0]
-        elif re.findall(matchB, txt):
+        elif re.findall(matchB, txt) and txt[:3] == '"""':
             return re.findall(matchB, txt)[0]
         else:
             return ''

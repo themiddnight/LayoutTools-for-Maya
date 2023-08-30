@@ -1,8 +1,6 @@
-# Snap multiple objects to one target
-# Select any objects, then select the last object as target and run
-### ENDDESCRIPTION
+'''Snap multiple objects to one target.
+- Select any objects, then select the last object as target and run.'''
 
-import sys
 import maya.cmds as cmds
 from modules import snap_mod
 reload(snap_mod)

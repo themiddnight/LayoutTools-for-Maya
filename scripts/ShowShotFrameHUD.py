@@ -1,3 +1,5 @@
+'''Display the frame number of the current shot.'''
+
 import pymel.core as pm
 
 def run():

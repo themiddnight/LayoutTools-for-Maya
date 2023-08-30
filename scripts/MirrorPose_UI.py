@@ -1,3 +1,7 @@
+'''To flip the pose horizontally. Select all ctrl of the character and flip it.
+
+- Set the index name by the ctrl naming.'''
+
 from pymel.core import *
 
 def doFlip(*args):

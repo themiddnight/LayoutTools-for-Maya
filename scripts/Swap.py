@@ -1,3 +1,5 @@
+'''Swap the position of the two selected objects.'''
+
 import maya.cmds as cmd
 
 def run():

@@ -1,3 +1,5 @@
+'''Set the Rotate X of the selected ctrl to the inner to maintain the Rotate Y axis of the inner.'''
+
 import pymel.core as pm
 
 def run():

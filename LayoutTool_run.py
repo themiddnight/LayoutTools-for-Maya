@@ -1,5 +1,6 @@
 def run():
-    from imp import reload
-    from LayoutTool import LayoutTool_UI
-    reload(LayoutTool_UI)
-    LayoutTool_UI.LayoutToolUI()
+	if __name__ == 'LayoutTool_run':
+	    from LayoutTool import LayoutTool_UI
+	    reload(LayoutTool_UI)
+	    LayoutTool_UI.LayoutToolUI()
+run()

@@ -1,3 +1,5 @@
+'''For randoming vertice position of the object. Can do it entirely object or on the selected vertice.'''
+
 import pymel.core as pm
 import random
 

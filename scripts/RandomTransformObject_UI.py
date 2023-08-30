@@ -1,3 +1,5 @@
+'''For randoming Translate, Rotate or Scale of the objects.'''
+
 import pymel.core as pm
 import random
 

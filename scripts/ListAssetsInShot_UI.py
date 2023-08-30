@@ -1,3 +1,8 @@
+'''For listing assets in shots.
+- Go to the shot.
+- Select the assets in the view and press "List".
+- Do it repeatly, it will be added to the list.'''
+
 import pymel.core as pm
 
 def doListAsset(*args):

@@ -1,3 +1,5 @@
+"""If you can't delete some objects, try to run this."""
+
 from pymel.core import *
 
 def run(): 

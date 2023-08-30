@@ -1,6 +1,5 @@
-# To bake the animation of outer ctrl to inner ctrl
-# Select 'placement_ctrl', set time range and run
-### ENDDESCRIPTION
+'''To bake the animation of outer ctrl to inner ctrl.
+Select 'placement_ctrl', set time range and run.'''
 
 import pymel.core as pm
 

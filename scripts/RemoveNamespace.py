@@ -1,3 +1,5 @@
+'''Remove the namespace of the selected object.'''
+
 import pymel.core as pm
 
 def doRemoveNS(*args):

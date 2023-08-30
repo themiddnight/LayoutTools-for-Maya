@@ -1,3 +1,5 @@
+'''Set keyframe to selected objects at start and end of every shot.'''
+
 import pymel.core as pm
 
 def run():

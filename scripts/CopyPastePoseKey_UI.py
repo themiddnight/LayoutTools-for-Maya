@@ -1,3 +1,7 @@
+'''Copy pose key to the same rigging character in the scene.
+- Select ctrl of the original character and press "Copy"
+- Select the same ctrl of another character and press "Paste"'''
+
 import pymel.core as pm
 
 ctrlLs = []
@@ -6,7 +10,8 @@ def copyKeyframe(*args):
     global ctrlLs
     sel = pm.ls(sl = True)
     pm.setKeyframe(sel)
-    pm.copyKey(sel, time = ":", hierarchy = 0, controlPoints = 0, shape = 0)
+    time = pm.currentTime()
+    pm.copyKey(sel, time = '%s:%s' %(time, time), hierarchy = 0, controlPoints = 0, shape = 0)
     
     for i in sel:
         a = i.split(':')[-1]
@@ -20,7 +25,8 @@ def pasteKeyframe(*args):
     for i in ctrlLs:
         pm.select('%s:%s' %(tarNs, i), add = True)
     selTar = pm.ls(sl = True)
-    pm.pasteKey (selTar, option = 'replaceCompletely', copies = 1, connect = 0, timeOffset = 0, floatOffset = 0, valueOffset = 0)
+    time = pm.currentTime()
+    pm.pasteKey (selTar, time = '%s:%s' %(time, time+1), option = 'replace', copies = 1, connect = 0, timeOffset = 0, floatOffset = 0, valueOffset = 0)
     
 def copyKeyUI():
     if pm.window('copyKeyWin', exists = True):

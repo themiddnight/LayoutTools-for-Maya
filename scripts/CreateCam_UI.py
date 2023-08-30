@@ -1,3 +1,5 @@
+'''The tool for creating shots with cameras assigned and naming.'''
+
 from pymel.core import *
 from maya.cmds import file
 

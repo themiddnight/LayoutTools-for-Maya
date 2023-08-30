@@ -1,3 +1,5 @@
+'''Delete selected shot with removing animation keys, assigned camera, and shift frames and shots after the deleted.'''
+
 import pymel.core as pm
 import maya.cmds as cmds
 from modules import getSortedShotLs_mod

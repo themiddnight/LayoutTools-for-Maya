@@ -1,3 +1,5 @@
+'''The intuitive tool for keying parent and unparenting.'''
+
 import pymel.core as pm
 
 def setParrentAnimUI():

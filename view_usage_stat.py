@@ -1,11 +1,10 @@
 try:  # Python 3
-    from tkinter import Tk
+    from tkinter import Tk, PanedWindow
     from tkinter import ttk
 except ImportError:  # Python 2
-    from Tkinter import Tk
+    from Tkinter import Tk, PanedWindow
     import ttk
 
-#### set database path in Model() first" ####
 
 class UsageStatUI(Tk):
     def __init__(self, control):
@@ -17,12 +16,14 @@ class UsageStatUI(Tk):
         self.title('Layout Scripts Statistic')
         self.geometry('1000x700+300+100')
 
+        pw = PanedWindow(self, orient='vertical', sashpad=5, sashrelief='solid')
+        pw.pack(fill='both', expand=True, padx=10, pady=10)
 
         # --- Data table ---
 
         # input widgets
-        data_frm = ttk.Frame(self)
-        data_frm.pack(fill='both', expand=True, padx=10, pady=10)
+        data_frm = ttk.Frame(pw)
+        data_frm.pack(fill='both', expand=True)
         func_frm = ttk.Frame(data_frm)
         func_frm.pack(fill='x', pady=(0,5))
         data_l_frm = ttk.Frame(func_frm)
@@ -53,7 +54,7 @@ class UsageStatUI(Tk):
         # data table
         table_frm = ttk.Frame(data_frm)
         table_frm.pack(fill='both', expand=True)
-        self.tabledata = ttk.Treeview(table_frm, column=self.colums, 
+        self.tabledata = ttk.Treeview(table_frm, column=self.colums,
                                       show='headings', selectmode='extended')
         sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal', 
                                        command=self.tabledata.xview)
@@ -70,19 +71,19 @@ class UsageStatUI(Tk):
             self.tabledata.column('{}'.format(i), width=coldata_w_ls[i], 
                                   stretch=coldata_s_ls[i])
             self.tabledata.heading('{}'.format(i), text=self.colums[i])
-
-        ttk.Separator(self, orient='horizontal').pack(padx = 10, fill='x')
+        
+        pw.add(data_frm, height=350, minsize=100)
 
 
         # --- Count table ---
         
         # button widgets
-        count_frm = ttk.Frame(self)
+        count_frm = ttk.Frame(pw)
         count_frm.pack(fill='both', expand=True, padx=10, pady=10)
         countBtns_frm = ttk.Frame(count_frm)
         countBtns_frm.pack(anchor='e', pady=(0,10))
         viewCountGrph_btn = ttk.Button(countBtns_frm, text='View Graph', 
-                                     width = 15)
+                                     width = 15, command=self.control.showGraph)
         viewCountGrph_btn.pack(padx=10, side='left')
         exportcount_btn = ttk.Button(countBtns_frm, text='Export CSV', width = 15, 
                                      command= lambda: self.control.exportCsv('count'))
@@ -102,6 +103,8 @@ class UsageStatUI(Tk):
                                   yscrollcommand=scly_tablesum.set)
         self.tablecount.pack(fill='both', expand=True)
 
+        pw.add(count_frm, minsize=100)
+
 
         # --- bindings ---
 
@@ -113,9 +116,9 @@ class UsageStatUI(Tk):
 
 
 try:  # Python 3
-    from tkinter import filedialog as FileDialog
+    from tkinter import filedialog as FileDialog, messagebox
 except ImportError:  # Python 2
-    import tkFileDialog as FileDialog
+    import tkFileDialog as FileDialog, tkMessageBox as messagebox
 from datetime import datetime
 import os
 class Control:
@@ -184,6 +187,26 @@ class Control:
         self.view.sel_count_l.config(text = 'Selected rows: {}'.format(sel))
 
 
+    def showGraph(self):
+        try:
+            import matplotlib.pyplot as plt
+            import pandas as pd
+            colLs = [self.order]
+            colLs.extend(self.model.getSuborderList(self.suborder))
+            data = list(map(lambda x: list(x)[:-1], self.countData))
+            df = pd.DataFrame(data, columns=colLs)
+            ax = df.plot(x = colLs[0], kind='bar', stacked=True, fontsize=8, 
+                         width=0.8, figsize=[10,5], zorder = 1,
+                         title='{} - {}'.format(self.order, self.suborder))
+            ax.grid(visible=True, axis='y', linewidth=0.5, zorder = 0)
+            plt.xticks(rotation=30, horizontalalignment='right')
+            plt.show()
+        except ImportError:
+            messagebox.showerror(
+                title='No Package', 
+                message='No "matplotlib" and "pandas" library in the system.')
+
+
     def exportCsv(self, table, *args):
         savepath = os.path.expanduser('~') + '/Documents'
         month    = self.view.month_ls_cmb.get()
@@ -209,19 +232,21 @@ class Control:
 
 import sqlite3
 import csv
+import json
 class Model:
     def __init__(self):
 
-        self.dbpath = 'C:/' # <---- database path. same as "LayoutTool/logScriptUsage.py"
+        with open('data/settings.json', 'r') as f:
+            pref = json.load(f)
+            self.dbfile = pref["db_file"] # <---- database path. same as "LayoutTool/logScriptUsage.py"
 
-        self.dbfile = 'layouttool_script_usage.db'
-        self.connection = sqlite3.connect(self.dbpath + '/' + self.dbfile)
+        self.connection = sqlite3.connect(self.dbfile)
 
 
     def getDateLs(self):
         cursor = self.connection.cursor()
-        cursor.execute("""SELECT DISTINCT strftime('%Y', timestamp) as month 
-                          FROM script_usage ORDER by month """)
+        cursor.execute("""SELECT DISTINCT strftime('%Y', timestamp) as year 
+                          FROM script_usage ORDER by year """)
         year_ls_raw = cursor.fetchall()
         cursor.execute("""SELECT DISTINCT strftime('%m', timestamp) as month 
                           FROM script_usage ORDER by month """)
@@ -231,6 +256,10 @@ class Model:
     
 
     def getData(self, year, month, order, suborder):
+        ''' SELECT * FROM script_usage 
+            WHERE timestamp BETWEEN '{}' and '{}' .format(
+            "yyyy-mm A", "yyyy-mm B")
+        '''
         cursor = self.connection.cursor()
         if month == 'All' and year == 'All':
             sqlcmd = """SELECT * FROM script_usage ORDER by {}, {}
@@ -300,6 +329,7 @@ class Model:
                 csv_writer = csv.writer(f)
                 csv_writer.writerow(col)
                 csv_writer.writerows(data)
+
 
 
 if __name__ == '__main__':

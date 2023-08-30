@@ -1,3 +1,5 @@
+'''Contraining multiple objects to one target object. The last selected object is the target.'''
+
 from pymel.core import *
 
 def run():

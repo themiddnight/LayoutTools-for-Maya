@@ -1,20 +1,22 @@
 import maya.cmds as cmds
 import os
+import json
 import sqlite3
 from datetime import datetime
 
 class LogScriptUsage:
 	def __init__(self):
 		
-		self.path = 'C:/' # <--- database path. same as "view_usage_stat.py | Model()"
+		with open(__file__.split('\\')[0] + '/data/settings.json', 'r') as f:
+			settings = json.load(f)
 		
-		self.dbfile = 'layouttool_script_usage.db'
+		self.dbfile = settings["db_file"]
 		self.timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		self.user = os.getenv('USERPROFILE').split('\\')[-1]
 		self.filename = cmds.file(q = True, sn = True).split('/')[-1]
 
 	def addData(self, script, runfrom):
-		con = sqlite3.connect(self.path + '/' + self.dbfile)
+		con = sqlite3.connect(self.dbfile)
 		cursor = con.cursor()
 
 		cursor.execute("""

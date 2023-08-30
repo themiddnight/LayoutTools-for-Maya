@@ -1,3 +1,6 @@
+'''When the depth of field enabled, select the object you want to focus, the camera of the current shot will focus on it. 
+Select on the ctrl is recommended.'''
+
 import pymel.core as pm
 from maya.cmds import xform
 from math import pow, sqrt

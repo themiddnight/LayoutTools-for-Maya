@@ -1,4 +1,7 @@
+'''Bake camera auto shake into "fly_ctrl" or "camera_localAim_ctrl" animation.'''
+
 import pymel.core as pm
+import sys 
 from modules import bakeCamShake_mod
 reload(bakeCamShake_mod)
 

@@ -1,3 +1,5 @@
+'''Set multiple cameras settings at once.'''
+
 import pymel.core as pm
 
 def batchCamSettingUI():

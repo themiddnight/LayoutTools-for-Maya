@@ -28,16 +28,15 @@ class UsageStatUI(Tk):
         func_frm.pack(fill='x', pady=(0,5))
         data_l_frm = ttk.Frame(func_frm)
         data_l_frm.pack(side='left')
-        ttk.Label(data_l_frm, text='Year:').grid(row=0, column=0, pady=(0,5), sticky='e')
-        self.year_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.year_ls_cmb.grid(row=0, column=1, padx=(0,20), pady=(0,5))
-        ttk.Label(data_l_frm, text='Month:').grid(row=0, column=2, pady=(0,5), sticky='e')
-        self.month_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.month_ls_cmb.grid(row=0, column=3, pady=(0,5))
-
-        ttk.Label(data_l_frm, text='Sort:').grid(row=1, column=0, sticky='e')
+        ttk.Label(data_l_frm, text='From:').grid(row=0, column=0, pady=(0,5), sticky='e')
+        self.dateFrom_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
+        self.dateFrom_ls_cmb.grid(row=0, column=1, padx=(0,20), pady=(0,5))
+        ttk.Label(data_l_frm, text='To:').grid(row=1, column=0, pady=(0,5), sticky='e')
+        self.dateTo_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
+        self.dateTo_ls_cmb.grid(row=1, column=1, padx=(0,20), pady=(0,5))
+        ttk.Label(data_l_frm, text='Sort:').grid(row=0, column=2, sticky='e')
         self.sort_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.sort_cmb.grid(row=1, column=1, padx=(0,20))
+        self.sort_cmb.grid(row=0, column=3)
         ttk.Label(data_l_frm, text='Subsort:').grid(row=1, column=2, sticky='e')
         self.subsort_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
         self.subsort_cmb.grid(row=1, column=3)
@@ -108,8 +107,8 @@ class UsageStatUI(Tk):
 
         # --- bindings ---
 
-        self.month_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
-        self.year_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.dateFrom_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.dateTo_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.sort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.subsort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.tabledata.bind('<<TreeviewSelect>>', self.control.showSelectedCount)
@@ -127,20 +126,17 @@ class Control:
         self.dataCols = ('id', 'timestamp', 'user', 'script', 'runfrom', 'filename')
         self.order    = 'script'
         self.suborder = 'runfrom'
-        self.year_ls  = list(['All'])
-        self.month_ls = list(['All'])
-        self.year, self.month = datetime.now().strftime('%Y-%m').split('-')
+        self.date     = datetime.now().strftime('%Y-%m')
 
         self.view  = UsageStatUI(self)
         self.model = Model()
         
-        year_ls_raw, month_ls_raw = self.model.getDateLs()
-        self.year_ls.extend(map(lambda x: x[0], year_ls_raw))
-        self.month_ls.extend(map(lambda x: x[0], month_ls_raw))
-        self.view.month_ls_cmb['values'] = self.month_ls
-        self.view.month_ls_cmb.current(self.month_ls.index(self.month))
-        self.view.year_ls_cmb['values'] = self.year_ls
-        self.view.year_ls_cmb.current(self.year_ls.index(self.year))
+        date_ls_raw = self.model.getDateLs()
+        self.date_ls = list(map(lambda x: x[0], date_ls_raw))
+        self.view.dateFrom_ls_cmb['values'] = self.date_ls
+        self.view.dateFrom_ls_cmb.current(self.date_ls.index(self.date))
+        self.view.dateTo_ls_cmb['values'] = self.date_ls
+        self.view.dateTo_ls_cmb.current(self.date_ls.index(self.date))
         self.view.sort_cmb['values'] = self.dataCols
         self.view.sort_cmb.current(self.dataCols.index(self.order))
         self.view.subsort_cmb['values'] = self.dataCols
@@ -149,8 +145,8 @@ class Control:
 
 
     def refresh(self, *args):
-        self.year     = self.view.year_ls_cmb.get()
-        self.month    = self.view.month_ls_cmb.get()
+        self.dateFrom = self.view.dateFrom_ls_cmb.get()
+        self.dateTo   = self.view.dateTo_ls_cmb.get()
         self.order    = self.view.sort_cmb.get()
         self.suborder = self.view.subsort_cmb.get()
         self.generateDataTable()
@@ -159,7 +155,7 @@ class Control:
 
     def generateDataTable(self, *args):
         self.view.tabledata.delete(*self.view.tabledata.get_children())
-        self.data = self.model.getData(self.year, self.month, self.order, self.suborder)
+        self.data = self.model.getData(self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in self.data:
             self.view.tabledata.insert(parent = '', index='end', iid=i[0]
                 ,values=(i[0], i[1], i[2], i[3], i[4], i[5]))
@@ -171,7 +167,7 @@ class Control:
         colLs.extend(self.model.getSuborderList(self.suborder))
         colLs.append('total')
         self.view.tablecount.configure(column=colLs)
-        self.countData = self.model.getCountData(self.year, self.month, self.order, self.suborder)
+        self.countData = self.model.getCountData(self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in range(len(colLs)):
             self.view.tablecount.column('{}'.format(i), 
                                         width = 170 if i==0 else 50, 
@@ -238,48 +234,28 @@ class Model:
 
         with open('data/settings.json', 'r') as f:
             pref = json.load(f)
-            self.dbfile = pref["db_file"] # <---- database path. same as "LayoutTool/logScriptUsage.py"
+            self.dbfile = pref["db_file"]
 
         self.connection = sqlite3.connect(self.dbfile)
 
 
     def getDateLs(self):
         cursor = self.connection.cursor()
-        cursor.execute("""SELECT DISTINCT strftime('%Y', timestamp) as year 
-                          FROM script_usage ORDER by year """)
-        year_ls_raw = cursor.fetchall()
-        cursor.execute("""SELECT DISTINCT strftime('%m', timestamp) as month 
-                          FROM script_usage ORDER by month """)
-        month_ls_raw = cursor.fetchall()
+        cursor.execute("""
+            SELECT DISTINCT strftime('%Y-%m', timestamp) as date 
+            FROM script_usage ORDER by date """)
+        date_ls_raw = cursor.fetchall()
         cursor.close()
-        return year_ls_raw, month_ls_raw
+        return date_ls_raw
     
 
-    def getData(self, year, month, order, suborder):
-        ''' SELECT * FROM script_usage 
-            WHERE timestamp BETWEEN '{}' and '{}' .format(
-            "yyyy-mm A", "yyyy-mm B")
-        '''
+    def getData(self, dateFrom, dateTo, order, suborder):
         cursor = self.connection.cursor()
-        if month == 'All' and year == 'All':
-            sqlcmd = """SELECT * FROM script_usage ORDER by {}, {}
-                     """.format(order, suborder)
-        elif month == 'All' and year != 'All':
-            sqlcmd = """SELECT * FROM script_usage 
-                        WHERE strftime('%Y', timestamp) = '{}' 
-                        ORDER by {}, {}
-                     """.format(year, order, suborder)
-        elif month != 'All' and year == 'All':
-            sqlcmd = """SELECT * FROM script_usage 
-                        WHERE strftime('%m', timestamp) = '{}' 
-                        ORDER by {}, {}
-                     """.format(month, order, suborder)
-        else:
-            sqlcmd = """SELECT * FROM script_usage 
-                        WHERE strftime('%m-%Y', timestamp) = '{}-{}' 
-                        ORDER by {}, {}
-                     """.format(month, year, order, suborder)
-        cursor.execute(sqlcmd)
+        cursor.execute("""
+            SELECT * FROM script_usage 
+            WHERE timestamp BETWEEN '{}-01' and '{}-32' 
+            ORDER by {}, {}""".format(
+            dateFrom, dateTo, order, suborder))
         data = cursor.fetchall()
         cursor.close()
         return data
@@ -288,29 +264,27 @@ class Model:
     def getSuborderList(self, suborder):
         cursor = self.connection.cursor()
         cursor.execute("""
-                       SELECT DISTINCT {}
-                       FROM script_usage
-                       """.format(suborder))
+            SELECT DISTINCT {}
+            FROM script_usage
+            """.format(suborder))
         data = cursor.fetchall()
         cursor.close()
         return list(map(lambda x: x[0], data))
     
 
-    def getCountData(self, year, month, order, suborder):
+    def getCountData(self, dateFrom, dateTo, order, suborder):
         suborderLs = self.getSuborderList(suborder)
         sqlcmd = 'SELECT {}, \n'.format(order)
         for i in suborderLs:
-            sqlcmd = sqlcmd + 'sum(case when {} = "{}" then 1 else 0 end) AS "{}", \n'.format(suborder, i, i)
-        sqlcmd = sqlcmd + 'count(*) AS total \nFROM script_usage \n'
-        if month == 'All' and year == 'All':
-            pass
-        elif month == 'All' and year != 'All':
-            sqlcmd = sqlcmd + "WHERE strftime('%Y', timestamp) = '{}' \n".format(year)
-        elif month != 'All' and year == 'All':
-            sqlcmd = sqlcmd + "WHERE strftime('%m', timestamp) = '{}' \n".format(month)
-        else:
-            sqlcmd = sqlcmd + "WHERE strftime('%m-%Y', timestamp) = '{}-{}' \n".format(month, year)
-        sqlcmd = sqlcmd + 'GROUP BY {} \nORDER BY total DESC;'.format(order)
+            sqlcmd = sqlcmd + 'sum(case when {} = "{}" then 1 else 0 end) AS "{}", \n'.format(
+                suborder, i, i)
+        sqlcmd = sqlcmd + """
+                    count(*) AS total
+                    FROM script_usage
+                    WHERE timestamp BETWEEN '{}-01' and '{}-32'
+                    GROUP BY {}
+                    ORDER BY total DESC;""".format(
+            dateFrom, dateTo, order)
         cursor = self.connection.cursor()
         cursor.execute(sqlcmd)
         data = cursor.fetchall()

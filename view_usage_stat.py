@@ -14,16 +14,18 @@ class UsageStatUI(Tk):
         self.colums = self.control.dataCols
 
         self.title('Layout Scripts Statistic')
-        self.geometry('1000x700+300+100')
+        self.geometry('1000x800+300+100')
 
-        pw = PanedWindow(self, orient='vertical', sashpad=5, sashrelief='solid')
+        pw = PanedWindow(self, orient='vertical', sashpad=15, sashrelief='solid')
         pw.pack(fill='both', expand=True, padx=10, pady=10)
+        
 
-        # --- Data table ---
+        # --- Data Section ---
 
-        # input widgets
         data_frm = ttk.Frame(pw)
         data_frm.pack(fill='both', expand=True)
+
+        # input widgets
         func_frm = ttk.Frame(data_frm)
         func_frm.pack(fill='x', pady=(0,5))
         data_l_frm = ttk.Frame(func_frm)
@@ -55,14 +57,10 @@ class UsageStatUI(Tk):
         table_frm.pack(fill='both', expand=True)
         self.tabledata = ttk.Treeview(table_frm, column=self.colums,
                                       show='headings', selectmode='extended')
-        sclx_tabledata = ttk.Scrollbar(table_frm, orient='horizontal', 
-                                       command=self.tabledata.xview)
-        sclx_tabledata.pack(side='bottom', fill='x')
         scly_tabledata = ttk.Scrollbar(table_frm, 
                                        command=self.tabledata.yview)
         scly_tabledata.pack(side='right', fill='y')
-        self.tabledata.configure(xscrollcommand=sclx_tabledata.set,
-                                yscrollcommand=scly_tabledata.set)
+        self.tabledata.configure(yscrollcommand=scly_tabledata.set)
         self.tabledata.pack(fill='both', expand=True)
         coldata_w_ls = [60, 150, 100, 200, 70, 300]
         coldata_s_ls = [0, 1, 1, 1, 1, 1]
@@ -74,23 +72,42 @@ class UsageStatUI(Tk):
         pw.add(data_frm, height=350, minsize=100)
 
 
-        # --- Count table ---
+        # --- Count Section ---
+
+        count_frm = ttk.Frame(pw)
+        count_frm.pack(fill='both', expand=True, padx=10)
         
         # button widgets
-        count_frm = ttk.Frame(pw)
-        count_frm.pack(fill='both', expand=True, padx=10, pady=10)
         countBtns_frm = ttk.Frame(count_frm)
-        countBtns_frm.pack(anchor='e', pady=(0,10))
-        viewCountGrph_btn = ttk.Button(countBtns_frm, text='View Graph', 
-                                     width = 15, command=self.control.showGraph)
-        viewCountGrph_btn.pack(padx=10, side='left')
+        countBtns_frm.pack(anchor='e')
         exportcount_btn = ttk.Button(countBtns_frm, text='Export CSV', width = 15, 
                                      command= lambda: self.control.exportCsv('count'))
         exportcount_btn.pack(side='left')
         
-        # count table
-        tablecount_frm = ttk.Frame(count_frm)
+        # count TAB
+        count_tab = ttk.Notebook(count_frm)
+        count_tab.pack(fill='both', expand=True)
+        tablecount_frm = ttk.Frame(count_tab)
         tablecount_frm.pack(fill='both', expand=True)
+
+        graphcount_frm = ttk.Frame(count_tab)
+        graphcount_frm.pack(fill='both', expand=True)
+
+        count_tab.add(tablecount_frm, text = '{: ^20}'.format('Table')) 
+        count_tab.add(graphcount_frm, text = '{: ^20}'.format('Graph')) 
+
+        # count graph
+        try:
+            self.figure = Figure()
+            self.graph_canvas = FigureCanvasTkAgg(self.figure, master = graphcount_frm)
+            self.graph_canvas.get_tk_widget().pack(expand = 1, fill = 'both')
+        except:
+            self.errorTx = ttk.Label(graphcount_frm,
+                    text='Error: Can not import "matplotlib" and "pandas" modules.').pack(
+                expand=True)
+
+
+        # count table
         self.tablecount = ttk.Treeview(tablecount_frm, show='headings')
         sclx_tablesum = ttk.Scrollbar(tablecount_frm, orient='horizontal', 
                                       command=self.tablecount.xview)
@@ -115,9 +132,15 @@ class UsageStatUI(Tk):
 
 
 try:  # Python 3
-    from tkinter import filedialog as FileDialog, messagebox
+    from tkinter import filedialog as FileDialog
 except ImportError:  # Python 2
-    import tkFileDialog as FileDialog, tkMessageBox as messagebox
+    import tkFileDialog as FileDialog
+try:
+    import pandas as pd
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+except ImportError:
+    pass
 from datetime import datetime
 import os
 class Control:
@@ -151,11 +174,18 @@ class Control:
         self.suborder = self.view.subsort_cmb.get()
         self.generateDataTable()
         self.generateCountTable()
+        self.generateCountGraph()
+
+
+    def showSelectedCount(self, *args):
+        sel = len(self.view.tabledata.selection())
+        self.view.sel_count_l.config(text = 'Selected rows: {}'.format(sel))
 
 
     def generateDataTable(self, *args):
         self.view.tabledata.delete(*self.view.tabledata.get_children())
-        self.data = self.model.getData(self.dateFrom, self.dateTo, self.order, self.suborder)
+        self.data = self.model.getData(
+            self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in self.data:
             self.view.tabledata.insert(parent = '', index='end', iid=i[0]
                 ,values=(i[0], i[1], i[2], i[3], i[4], i[5]))
@@ -167,7 +197,8 @@ class Control:
         colLs.extend(self.model.getSuborderList(self.suborder))
         colLs.append('total')
         self.view.tablecount.configure(column=colLs)
-        self.countData = self.model.getCountData(self.dateFrom, self.dateTo, self.order, self.suborder)
+        self.countData = self.model.getCountData(
+            self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in range(len(colLs)):
             self.view.tablecount.column('{}'.format(i), 
                                         width = 170 if i==0 else 50, 
@@ -178,47 +209,45 @@ class Control:
                 ,values=(i))
 
 
-    def showSelectedCount(self, *args):
-        sel = len(self.view.tabledata.selection())
-        self.view.sel_count_l.config(text = 'Selected rows: {}'.format(sel))
-
-
-    def showGraph(self):
+    def generateCountGraph(self):
         try:
-            import matplotlib.pyplot as plt
-            import pandas as pd
+            self.view.figure.clear()
+            ax = self.view.figure.add_subplot()
+            self.view.figure.subplots_adjust(left = 0.06, bottom = 0.12,
+                                             right = 0.94, top = 0.88)
             colLs = [self.order]
             colLs.extend(self.model.getSuborderList(self.suborder))
             data = list(map(lambda x: list(x)[:-1], self.countData))
             df = pd.DataFrame(data, columns=colLs)
-            ax = df.plot(x = colLs[0], kind='bar', stacked=True, fontsize=8, 
-                         width=0.8, figsize=[10,5], zorder = 1,
-                         title='{} - {}'.format(self.order, self.suborder))
-            ax.grid(visible=True, axis='y', linewidth=0.5, zorder = 0)
-            plt.xticks(rotation=30, horizontalalignment='right')
-            plt.show()
-        except ImportError:
-            messagebox.showerror(
-                title='No Package', 
-                message='No "matplotlib" and "pandas" library in the system.')
+            df.plot(x = colLs[0], kind='bar', stacked=True, fontsize=8, 
+                    width=0.8, ax=ax, xticks = [],
+                    title='{} - {}'.format(self.order, self.suborder))
+            ax.legend(fontsize = 9)
+            x = [i[0] for i in data]
+            for i in range(len(x)):
+                ax.annotate(x[i], xy = (i, 0), xytext = (-3,10), rotation = 90, 
+                            textcoords = 'offset points',fontsize = 8)
+            self.view.graph_canvas.draw()
+        except:
+            pass
 
 
     def exportCsv(self, table, *args):
         savepath = os.path.expanduser('~') + '/Documents'
-        month    = self.view.month_ls_cmb.get()
-        year     = self.view.year_ls_cmb.get()
+        dateFrom    = self.view.dateFrom_ls_cmb.get()
+        dateTo     = self.view.dateTo_ls_cmb.get()
         if table == 'data':
             col  = self.dataCols
             data = self.data
             savename = 'scriptUsage_data_{}-{}'.format(
-                month, year)
+                dateFrom, dateTo)
         elif table == 'count':
             col  = [self.order]
             col.extend(self.model.getSuborderList(self.suborder))
             col.append('total')
             data = self.countData
             savename = 'scriptUsage_count_{}-{}_{}-{}'.format(
-                self.order, self.suborder, month, year)
+                self.order, self.suborder, dateFrom, dateTo)
         csvfile = FileDialog.asksaveasfilename(
             initialdir=savepath, initialfile = savename, 
             filetypes=([('CSV','*.csv')]), defaultextension='.csv')

@@ -183,8 +183,10 @@ class LayoutToolUI:
         mode = pm.checkBox('multiSelChk', q = True, v = True)
         if mode:
             self.selMode = True
+            self.core.logUiData('multiSelection', 'true')
         else:
             self.selMode = False
+            self.core.logUiData('multiSelection', 'false')
         
     def selectCurrentShot(self, *args):
         reload(LayoutTool_ctrlList)

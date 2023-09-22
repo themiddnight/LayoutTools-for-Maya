@@ -3,6 +3,7 @@ import maya.mel as mel
 import os
 import json
 import re
+import ast
 import scripts
 import logScriptUsage
 reload(scripts)
@@ -14,7 +15,8 @@ class LayoutToolCore:
 
         with open(__file__.split('\\')[0] + '/data/settings.json', 'r') as f:
             settings = json.load(f)
-        self.logging = settings["loggingData"]
+        self.scriptLogging = settings["loggingScriptData"]
+        self.uiLogging = settings["loggingUiData"]
 
         self.pref_default = {"refCam": "persp", 
                         "customScriptBtn": ["RxPlacementToOffset",
@@ -76,27 +78,30 @@ class LayoutToolCore:
     def getScripDescription(self, scriptName):
         with open(self.scripts_path + scriptName + '.py') as f:
             txt = f.read()
-        matchA = "'''([\\w\\W]*?)'''"
-        matchB = '"""([\\w\\W]*?)"""'
-        if re.findall(matchA, txt) and txt[:3] == "'''":
-            return re.findall(matchA, txt)[0]
-        elif re.findall(matchB, txt) and txt[:3] == '"""':
-            return re.findall(matchB, txt)[0]
-        else:
-            return ''
+        module = ast.parse(txt)
+        docstring = ast.get_docstring(module)
+        if not docstring:
+            docstring = ""
+        return docstring
 
 
     def runScript(self, scriptName, runfrom):
-        reload(logScriptUsage)
         pyCmd = '''from scripts import %s \nreload(%s) \n%s.run()''' %(
             scriptName, scriptName, scriptName)
         exec(pyCmd)
-        self.logData(scriptName, runfrom) # if don't want to log usage data, disable this
+        self.logScriptData(scriptName, runfrom)
 
 
-    def logData(self, scriptName, runfrom):
-        if self.logging == True:
-            logScriptUsage.LogScriptUsage().addData(scriptName, runfrom)
+    def logScriptData(self, scriptName, runfrom):
+        reload(logScriptUsage)
+        if self.scriptLogging == True:
+            logScriptUsage.LogScriptUsage().addScriptData(scriptName, runfrom)
+
+
+    def logUiData(self, command, subCommand):
+        reload(logScriptUsage)
+        if self.uiLogging == True:
+            logScriptUsage.LogScriptUsage().addUiData(command, subCommand)
         
 
     def addScriptToShelf(self, scriptName):

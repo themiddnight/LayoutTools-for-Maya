@@ -11,7 +11,6 @@ class UsageStatUI(Tk):
         Tk.__init__(self)
 
         self.control = control
-        self.colums = self.control.dataCols
 
         self.title('Layout Scripts Statistic')
         self.geometry('1000x800+300+100')
@@ -28,30 +27,34 @@ class UsageStatUI(Tk):
         # input widgets
         func_frm = ttk.Frame(data_frm)
         func_frm.pack(fill='x', pady=(0,5))
+
         data_l_frm = ttk.Frame(func_frm)
         data_l_frm.pack(side='left')
-        ttk.Label(data_l_frm, text='From:').grid(row=0, column=0, pady=(0,5), sticky='e')
-        self.dateFrom_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.dateFrom_ls_cmb.grid(row=0, column=1, padx=(0,20), pady=(0,5))
-        ttk.Label(data_l_frm, text='To:').grid(row=1, column=0, pady=(0,5), sticky='e')
-        self.dateTo_ls_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.dateTo_ls_cmb.grid(row=1, column=1, padx=(0,20), pady=(0,5))
-        ttk.Label(data_l_frm, text='Sort:').grid(row=0, column=2, sticky='e')
-        self.sort_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
-        self.sort_cmb.grid(row=0, column=3)
-        ttk.Label(data_l_frm, text='Subsort:').grid(row=1, column=2, sticky='e')
-        self.subsort_cmb = ttk.Combobox(data_l_frm, width=10, state="readonly")
 
-        exportdata_btn = ttk.Button(data_l_frm, text='Refresh', width = 15, 
+        ttk.Label(data_l_frm, text='Table:').grid(row=0, column=0)
+        self.table_cmb = ttk.Combobox(data_l_frm, width=15, state="readonly")
+        self.table_cmb.grid(row=0, column=1, padx=(0,10), pady=3)
+        refresh_btn = ttk.Button(data_l_frm, text='Refresh', width = 15, 
                                      command=self.control.refresh)
-        exportdata_btn.grid(row=1, column=4, padx=20)
-
-        self.subsort_cmb.grid(row=1, column=3)
+        refresh_btn.grid(row=0, column=3, padx=(0,10), pady=3)
         self.sel_count_l = ttk.Label(data_l_frm, text='Selected rows: 0')
-        self.sel_count_l.grid(row=1, column=5)
+        self.sel_count_l.grid(row=0, column=5, padx=(0,10))
+        ttk.Label(data_l_frm, text='From:').grid(row=1, column=0)
+        self.dateFrom_ls_cmb = ttk.Combobox(data_l_frm, width=15, state="readonly")
+        self.dateFrom_ls_cmb.grid(row=1, column=1, padx=(0,10), pady=3)
+        ttk.Label(data_l_frm, text='To:').grid(row=1, column=2)
+        self.dateTo_ls_cmb = ttk.Combobox(data_l_frm, width=15, state="readonly")
+        self.dateTo_ls_cmb.grid(row=1, column=3, padx=(0,10), pady=3)
+        ttk.Label(data_l_frm, text='Sort:').grid(row=1, column=4)
+        self.sort_cmb = ttk.Combobox(data_l_frm, width=15, state="readonly")
+        self.sort_cmb.grid(row=1, column=5, padx=(0,10), pady=3)
+        ttk.Label(data_l_frm, text='Subsort:').grid(row=1, column=6)
+        self.subsort_cmb = ttk.Combobox(data_l_frm, width=15, state="readonly")
+        self.subsort_cmb.grid(row=1, column=7, padx=(0,10), pady=3)
 
         data_r_frm = ttk.Frame(func_frm)
         data_r_frm.pack(side='right')
+
         ttk.Label(data_r_frm, text='').grid(row=0, column=0, pady=(0,5))
         exportdata_btn = ttk.Button(data_r_frm, text='Export CSV', width = 15, 
                                      command=lambda: self.control.exportCsv('data'))
@@ -60,19 +63,11 @@ class UsageStatUI(Tk):
         # data table
         table_frm = ttk.Frame(data_frm)
         table_frm.pack(fill='both', expand=True)
-        self.tabledata = ttk.Treeview(table_frm, column=self.colums,
-                                      show='headings', selectmode='extended')
-        scly_tabledata = ttk.Scrollbar(table_frm, 
-                                       command=self.tabledata.yview)
+        self.tabledata = ttk.Treeview(table_frm, show='headings', selectmode='extended')
+        scly_tabledata = ttk.Scrollbar(table_frm, command=self.tabledata.yview)
         scly_tabledata.pack(side='right', fill='y')
         self.tabledata.configure(yscrollcommand=scly_tabledata.set)
         self.tabledata.pack(fill='both', expand=True)
-        coldata_w_ls = [60, 150, 100, 200, 70, 300]
-        coldata_s_ls = [0, 1, 1, 1, 1, 1]
-        for i in range(6):
-            self.tabledata.column('{}'.format(i), width=coldata_w_ls[i], 
-                                  stretch=coldata_s_ls[i])
-            self.tabledata.heading('{}'.format(i), text=self.colums[i])
         
         pw.add(data_frm, height=350, minsize=100)
 
@@ -133,6 +128,7 @@ class UsageStatUI(Tk):
         self.dateTo_ls_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.sort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
         self.subsort_cmb.bind('<<ComboboxSelected>>', self.control.refresh)
+        self.table_cmb.bind('<<ComboboxSelected>>', self.control.tableRefresh)
         self.tabledata.bind('<<TreeviewSelect>>', self.control.showSelectedCount)
 
 
@@ -148,27 +144,44 @@ except ImportError:
     pass
 from datetime import datetime
 import os
+
+
 class Control:
     def __init__(self):
 
-        self.dataCols = ('id', 'date', 'user', 'script', 'runfrom', 'filename')
-        self.order    = 'script'
-        self.suborder = 'runfrom'
-        self.date     = datetime.now().strftime('%Y-%m')
-
-        self.view  = UsageStatUI(self)
         self.model = Model()
-        
-        date_ls_raw = self.model.getDateLs()
+        self.view  = UsageStatUI(self)
+
+        self.tableLs = self.model.getTables()
+        self.table   = self.tableLs[0]
+        self.date    = datetime.now().strftime('%Y-%m')
+
+        self.view.table_cmb['values'] = self.tableLs
+        self.view.table_cmb.current(self.tableLs.index(self.table))
+        self.tableRefresh()
+
+
+    def tableRefresh(self, *args):
+        self.table    = self.view.table_cmb.get()
+        self.dataCols = self.model.getColumns(self.table)
+
+        self.view.tabledata['column'] = self.dataCols
+        for num, col in enumerate(self.dataCols):
+            self.view.tabledata.column('{}'.format(num), 
+                                        width=60 if num == 0 else 150 
+                                        if col != self.dataCols[-1] else 250)
+            self.view.tabledata.heading('{}'.format(num), text=col)
+
+        date_ls_raw = self.model.getDateLs(self.table)
         self.date_ls = list(map(lambda x: x[0], date_ls_raw))
         self.view.dateFrom_ls_cmb['values'] = self.date_ls
         self.view.dateFrom_ls_cmb.current(self.date_ls.index(self.date))
         self.view.dateTo_ls_cmb['values'] = self.date_ls
         self.view.dateTo_ls_cmb.current(self.date_ls.index(self.date))
         self.view.sort_cmb['values'] = self.dataCols
-        self.view.sort_cmb.current(self.dataCols.index(self.order))
+        self.view.sort_cmb.current(2)
         self.view.subsort_cmb['values'] = self.dataCols
-        self.view.subsort_cmb.current(self.dataCols.index(self.suborder))
+        self.view.subsort_cmb.current(3)
         self.refresh()
 
 
@@ -189,7 +202,7 @@ class Control:
 
     def generateDataTable(self, *args):
         self.view.tabledata.delete(*self.view.tabledata.get_children())
-        self.data = self.model.getData(
+        self.data = self.model.getData(self.table,
             self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in self.data:
             self.view.tabledata.insert(parent = '', index='end', iid=i[0]
@@ -199,10 +212,10 @@ class Control:
     def generateCountTable(self, *args):
         self.view.tablecount.delete(*self.view.tablecount.get_children())
         colLs = [self.order]
-        colLs.extend(self.model.getSuborderList(self.suborder))
+        colLs.extend(self.model.getSuborderList(self.table, self.suborder))
         colLs.append('total')
         self.view.tablecount.configure(column=colLs)
-        self.countData = self.model.getCountData(
+        self.countData = self.model.getCountData(self.table, 
             self.dateFrom, self.dateTo, self.order, self.suborder)
         for i in range(len(colLs)):
             self.view.tablecount.column('{}'.format(i), 
@@ -221,7 +234,7 @@ class Control:
             self.view.figure.subplots_adjust(left = 0.06, bottom = 0.12,
                                              right = 0.94, top = 0.88)
             colLs = [self.order]
-            colLs.extend(self.model.getSuborderList(self.suborder))
+            colLs.extend(self.model.getSuborderList(self.table, self.suborder))
             data = list(map(lambda x: list(x)[:-1], self.countData))
             df = pd.DataFrame(data, columns=colLs)
             df.plot(x = colLs[0], kind='bar', stacked=True, fontsize=8, 
@@ -239,20 +252,18 @@ class Control:
 
     def exportCsv(self, table, *args):
         savepath = os.path.expanduser('~') + '/Documents'
-        dateFrom    = self.view.dateFrom_ls_cmb.get()
-        dateTo     = self.view.dateTo_ls_cmb.get()
         if table == 'data':
             col  = self.dataCols
             data = self.data
-            savename = 'scriptUsage_data_{}-{}'.format(
-                dateFrom, dateTo)
+            savename = '{}_data_{}-{}'.format(
+                self.table, self.dateFrom, self.dateTo)
         elif table == 'count':
             col  = [self.order]
-            col.extend(self.model.getSuborderList(self.suborder))
+            col.extend(self.model.getSuborderList(self.table, self.suborder))
             col.append('total')
             data = self.countData
-            savename = 'scriptUsage_count_{}-{}_{}-{}'.format(
-                self.order, self.suborder, dateFrom, dateTo)
+            savename = '{}_count_{}-{}_{}-{}'.format(
+                self.table, self.order, self.suborder, self.dateFrom, self.dateTo)
         csvfile = FileDialog.asksaveasfilename(
             initialdir=savepath, initialfile = savename, 
             filetypes=([('CSV','*.csv')]), defaultextension='.csv')
@@ -263,6 +274,8 @@ class Control:
 import sqlite3
 import csv
 import json
+
+
 class Model:
     def __init__(self):
 
@@ -273,61 +286,90 @@ class Model:
         self.connection = sqlite3.connect(self.dbfile)
 
 
-    def getDateLs(self):
+    def getTables(self):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            SELECT name FROM sqlite_master WHERE type='table'
+            """)
+        table_ls_raw = cursor.fetchall()
+        cursor.close()
+        tables = (
+            list(
+                filter(
+                    lambda x: x != 'sqlite_sequence',
+                    list(map(lambda x: x[0], table_ls_raw))
+                )
+            )
+        )
+        return tables
+
+
+    def getColumns(self, table):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            PRAGMA table_info({})
+            """.format(table))
+        column_ls_raw = cursor.fetchall()
+        cursor.close()
+        columns = (list(map(lambda x: x[1], column_ls_raw)))
+        return columns
+
+
+    def getDateLs(self, table):
         cursor = self.connection.cursor()
         cursor.execute("""
             SELECT DISTINCT strftime('%Y-%m', timestamp) as date 
-            FROM script_usage ORDER by date """)
+            FROM {} ORDER by date """.format(table))
         date_ls_raw = cursor.fetchall()
         cursor.close()
         return date_ls_raw
     
 
-    def getData(self, dateFrom, dateTo, order, suborder):
-        if order == 'date':
+    def getData(self, table, dateFrom, dateTo, order, suborder):
+        if order == 'timestamp':
             order = 'DATE(timestamp)'
-        if suborder == 'date':
+        if suborder == 'timestamp':
             suborder = 'DATE(timestamp)'
         cursor = self.connection.cursor()
         cursor.execute("""
-            SELECT * FROM script_usage 
+            SELECT * FROM {} 
             WHERE timestamp BETWEEN '{}-01' and '{}-32' 
             ORDER by {}, {}""".format(
-            dateFrom, dateTo, order, suborder))
+            table, dateFrom, dateTo, order, suborder))
         data = cursor.fetchall()
         cursor.close()
         return data
     
 
-    def getSuborderList(self, suborder):
-        if suborder == 'date':
+    def getSuborderList(self, table, suborder):
+        if suborder == 'timestamp':
             suborder = 'DATE(timestamp)'
         cursor = self.connection.cursor()
         cursor.execute("""
             SELECT DISTINCT {}
-            FROM script_usage
-            """.format(suborder))
+            FROM {}
+            """.format(suborder, table))
         data = cursor.fetchall()
         cursor.close()
         return list(map(lambda x: x[0], data))
     
 
-    def getCountData(self, dateFrom, dateTo, order, suborder):
-        if order == 'date':
+    def getCountData(self, table, dateFrom, dateTo, order, suborder):
+        if order == 'timestamp':
             order = 'DATE(timestamp)'
-        if suborder == 'date':
+        if suborder == 'timestamp':
             suborder = 'DATE(timestamp)'
-        suborderLs = self.getSuborderList(suborder)
+        suborderLs = self.getSuborderList(table, suborder)
         sqlcmd = 'SELECT {}, \n'.format(order)
         for i in suborderLs:
             sqlcmd = sqlcmd + 'sum(case when {} = "{}" then 1 else 0 end) AS "{}", \n'.format(
                 suborder, i, i)
         sqlcmd = sqlcmd + """
                     count(*) AS total
-                    FROM script_usage
+                    FROM {}
                     WHERE timestamp BETWEEN '{}-01' and '{}-32'
                     GROUP BY {}""".format(
-            dateFrom, dateTo, order)
+            table, dateFrom, dateTo, order)
         cursor = self.connection.cursor()
         cursor.execute(sqlcmd)
         data = cursor.fetchall()
@@ -346,7 +388,6 @@ class Model:
                 csv_writer = csv.writer(f)
                 csv_writer.writerow(col)
                 csv_writer.writerows(data)
-
 
 
 if __name__ == '__main__':

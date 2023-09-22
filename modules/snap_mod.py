@@ -1,3 +1,4 @@
+import maya.cmds as cmd
 import pymel.core as pm
 
 # input the list of objects, the latest object is the target

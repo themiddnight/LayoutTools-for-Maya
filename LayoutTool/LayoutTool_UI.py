@@ -6,8 +6,6 @@ reload(LayoutTool_core)
 reload(LayoutTool_ctrlList)
 
 
-################################
-
 class LayoutToolUI:
     def __init__(self, *args, **kwargs):
 
@@ -42,7 +40,7 @@ class LayoutToolUI:
             self.rowCol2 = pm.rowColumnLayout(nc = 3, cw = ([1,81],[2,81],[3,81]), cs = ([2,5],[3,5]), rs = ([1,5]))
             with self.rowCol2:
                 for i in self.core.getPref("lensList"):
-                    pm.button(l = str(i) + ' mm', c = lambda x, fl = i: self.setsetRefCamFocal(fl))
+                    pm.button(l = str(i) + ' mm', c = lambda x, fl = i: self.setRefCamFocal(fl))
             pm.separator()
             self.rowCol1 = pm.rowColumnLayout(nc = 2, cw = ([1,130],[2,120]), cs = [2,5], rs = ([1,5]))
             with self.rowCol1:
@@ -81,7 +79,9 @@ class LayoutToolUI:
                 pm.button(l = 'Copy Shake Value', c = self.copyShake)
                 pm.button(l = 'Paste Shake Value', c = self.pasteShake)
                 for i in self.core.getPref("customScriptBtn"):
-                    pm.button(l = i, c = lambda x, i = i: self.runScriptBtn(i))
+                    pm.button(l = i, bgc = (0.3,0.3,0.3), c = lambda x, i = i: self.runScriptBtn(i))
+            pm.separator()
+            pm.button(l = 'Refresh', h = 20, c = self.refresh)
                 
         ################################
         
@@ -107,38 +107,60 @@ class LayoutToolUI:
             pm.tabLayout(self.tabs, e = True, tabLabel = ((self.colMain1, 'Layout'), (colMain2, 'Scripts')))
     
         pm.showWindow('layoutToolsWin')
+
+        
+    ################################
         
     # -------- basic ui process
+
+    def refresh(self, *args):
+        self.camLs, self.assetLs = self.ctrl.getNameList()
+        self.scriptLs = self.core.getScripts()
+        pm.textScrollList('camNameTx', e = True, ra = True)
+        pm.textScrollList('assetNameTx', e = True, ra = True)
+        pm.textScrollList('camNameTx', e = True, append = self.camLs)
+        pm.textScrollList('assetNameTx', e = True, append = self.assetLs)
+        pm.textScrollList('scriptsTx', e = True, ra = True)
+        pm.textScrollList('scriptsTx', e = True, append = self.scriptLs)
+        self.core.logUiData('refresh', '')
         
     def getScriptDescription(self, *args):
+        reload(LayoutTool_core)
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
         pm.scrollField('scriptDescriptionTx', e = True, cl = True)
         pm.scrollField('scriptDescriptionTx', e = True, tx = self.core.getScripDescription(scriptName))
         
     def runScriptTx(self, *args):
+        reload(LayoutTool_core)
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
         self.core.runScript(scriptName, 'tool')
         
     def runScriptBtn(self, scriptName):
+        reload(LayoutTool_core)
         self.core.runScript(scriptName, 'button')
         
     def addScriptToShelf(self, *args):
+        reload(LayoutTool_core)
         scriptName = pm.textScrollList('scriptsTx', q = True, si = True)[0]
         self.core.addScriptToShelf(scriptName)
         
     # -------- ref cam
     def setRefCamName(self, *args):
+        reload(LayoutTool_core)
         refCamStr = str(pm.ls(sl = True)[0])
         self.core.savePref("refCam", refCamStr)
         pm.text('refCamTx', e = True, l = '%s' %refCamStr)
+        self.core.logUiData('setRefCamName', refCamStr)
         
-    def setsetRefCamFocal(self, fl):
+    def setRefCamFocal(self, fl):
         refCam = pm.text('refCamTx', q = True, l = True)
         refCamShape = pm.ls(refCam)
         pm.setAttr(refCamShape[-1].focalLength, fl)
+        self.core.logUiData('setRefCamFocal', str(fl)+'mm')
         
     # -------- ctrl selection
     def selectCtrl(self, *args):
+        reload(LayoutTool_ctrlList)
         camName = pm.textScrollList('camNameTx', q = True, si = True)
         camCtrl = pm.textScrollList('camCtrlTx', q = True, si = True)
         assetName = pm.textScrollList('assetNameTx', q = True, si = True)
@@ -165,17 +187,21 @@ class LayoutToolUI:
             self.selMode = False
         
     def selectCurrentShot(self, *args):
+        reload(LayoutTool_ctrlList)
         pm.textScrollList('camCtrlTx', e = True, da = True)
         currentShotName, shotStart, shotEnd = self.ctrl.currentShot()
         pm.textScrollList('camNameTx', e = True, da = True, si = currentShotName)
         pm.playbackOptions(ast = shotStart, min = shotStart, aet = shotEnd, max = shotEnd)
+        self.core.logUiData('selectCurrentShot', '')
         
     def snapToRefCam(self, *args):
+        reload(LayoutTool_ctrlList)
         refCam = pm.text('refCamTx', q = True, l = True)
         focal = pm.getAttr('%s.focalLength' %refCam)
         camName = pm.textScrollList('camNameTx', q = True, si = True)[-1]
         camCtrl = pm.textScrollList('camCtrlTx', q = True, si = True)[-1]
         self.ctrl.snapToRefCam(camName, camCtrl, refCam, focal)
+        self.core.logUiData('snapToRefCam', camCtrl)
         
     def clearSelection(self, *args):
         pm.textScrollList('camNameTx', e = True, da = True)
@@ -183,14 +209,19 @@ class LayoutToolUI:
         pm.textScrollList('assetNameTx', e = True, da = True)
         pm.textScrollList('assetCtrlTx', e = True, da = True)
         self.selectCtrl(self.selMode)
+        self.core.logUiData('clearSelection', '')
         
     # -------- copy/paste shake
     
     def copyShake(self, *args):
+        reload(LayoutTool_core)
         self.ctrl.copyShakeProc()
+        self.core.logUiData('copyShake', '')
         
     def pasteShake(self, *args):
+        reload(LayoutTool_core)
         self.ctrl.pasteShakeProc()
+        self.core.logUiData('pasteShake', '')
 
 
 class SetCustomLensUI(LayoutToolUI):
@@ -233,6 +264,7 @@ class SetCustomLensUI(LayoutToolUI):
         lensLs.append(pm.intField('int5', q = True, v = True))
         lensLs.append(pm.intField('int6', q = True, v = True))
         self.core.savePref("lensList", lensLs)
+        self.core.logUiData('SetCustomLensUI', '{},{},{},{},{},{}'.format(*lensLs))
         pm.deleteUI('setLensWin')
         LayoutToolUI()
         
@@ -336,6 +368,7 @@ class SetCustomScriptBtnUI(LayoutToolUI):
         
     def okBtn(self, *args):
         self.core.savePref("customScriptBtn", pm.textScrollList('customScriptTx', q = True, ai = True))
+        self.core.logUiData('SetCustomScriptBtnUI', '')
         pm.deleteUI('setBtnWin')
         LayoutToolUI()
         

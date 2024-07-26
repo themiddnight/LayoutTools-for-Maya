@@ -1,7 +1,7 @@
 # Initialize
 **Place the app folder to the desired path, then replace "app_path" string and run this in maya**
 
-    app_path = "Path:/to/this/app"
+    app_path = "Path:/to/layouttools-for-maya"
 
     import sys, os
     os.environ['layout_tool_path'] = app_path

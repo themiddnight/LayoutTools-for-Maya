@@ -2,14 +2,6 @@ import maya.cmds as mc
 from lay_app import lay_app_core
 from lay_app import lay_app_ctrlList
 
-try:
-    reload(lay_app_core)
-    reload(lay_app_ctrlList)
-except:
-    import importlib
-    importlib.reload(lay_app_core)
-    importlib.reload(lay_app_ctrlList)
-
 
 class LayoutToolUI:
     def __init__(self, *args, **kwargs):

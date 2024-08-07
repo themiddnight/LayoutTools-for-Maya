@@ -93,8 +93,10 @@ except:
         
 
     def addScriptToShelf(self, scriptName):
+        app_path = os.environ['layout_tool_path']
+        pyCmd = "import os\nos.environ['layout_tool_path'] = '%s'\n" %(app_path)
         with open(self.scripts_path + scriptName + ".py", "r") as file:
-            pyCmd = file.read() + "\n\nrun()"
+            pyCmd += file.read() + "\n\nrun()"
             
         current_shelf = mm.eval("$shelves = `tabLayout -q -selectTab $gShelfTopLevel`")
         mc.shelfButton(

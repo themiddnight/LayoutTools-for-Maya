@@ -5,9 +5,9 @@ import sys, os
 path = os.environ['layout_tool_path'] + '/lay_modules/'
 if path not in sys.path: sys.path.append(path)
 
-import maya.cmds as cmds
+import maya.cmds as mc
 import snap_mod
 
 def run():
-    sel = cmds.ls(sl = True)
+    sel = mc.ls(sl = True)
     snap_mod.snap(sel)
